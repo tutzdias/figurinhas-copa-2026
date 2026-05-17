@@ -18,7 +18,7 @@ function statusOf(p) {
 }
 
 // ---------- HOME ----------
-function HomeScreen({ owned, totalOwned, total, countries, onSeeAll }) {
+function HomeScreen({ owned, totalOwned, total, countries, onSeeAll, onLogout, userEmail }) {
   const pct = total ? Math.round((totalOwned / total) * 100) : 0;
   const missing = total - totalOwned;
   const stats = useMemo(() => {
@@ -57,9 +57,14 @@ function HomeScreen({ owned, totalOwned, total, countries, onSeeAll }) {
       <div className="home-content">
         <div className="home-topbar">
           <div className="home-eyebrow"><span className="dot" /> AO VIVO · ALBUM 2026</div>
-          <div className="home-stamp">
-            COPA<br/>DO MUNDO<br/>2026
-          </div>
+          <button className="home-logout" onClick={onLogout} title={userEmail || "Sair"}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <path d="M16 17l5-5-5-5" />
+              <path d="M21 12H9" />
+            </svg>
+            Sair
+          </button>
         </div>
 
         <div className="home-headline">
@@ -142,7 +147,7 @@ function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelect
             CATÁLOGO<br/>901 figurinhas
           </div>
         </div>
-        <h1 className="list-title">Ver Todos</h1>
+        <h1 className="list-title">Todos os Países</h1>
         <div className="list-counter">
           <span className="big">{totalOwned} / {total}</span>
           <span className="sep" />
