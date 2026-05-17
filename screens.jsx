@@ -38,7 +38,10 @@ function HomeScreen({ owned, totalOwned, total, countries, onSeeAll }) {
   return (
     <div className="home screen-enter">
       <div className="home-bg" />
-      <div className="home-orb" />
+      <div className="home-trophy" aria-hidden>
+        <div className="home-trophy-glow" />
+        <img src="assets/trophy.webp" alt="" />
+      </div>
       {is100 && (
         <div className="confetti" aria-hidden>
           {Array.from({ length: 30 }).map((_, i) => (
@@ -115,7 +118,7 @@ function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelect
       groups.forEach(g => g.countries.forEach(c => all.push({ ...c, group: g.id, groupLabel: g.label })));
       const filtered = all
         .filter(c => !q || c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q))
-        .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+        .sort((a, b) => a.code.localeCompare(b.code));
       return [{ id: "AZ", label: "A–Z", countries: filtered, special: true }];
     }
     return groups
