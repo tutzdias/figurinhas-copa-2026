@@ -58,7 +58,7 @@ function HomeScreen({ owned, totalOwned, total, countries, onSeeAll }) {
         <div className="home-topbar">
           <div className="home-eyebrow"><span className="dot" /> AO VIVO · ALBUM 2026</div>
           <div className="home-stamp">
-            COPA<br/>MUNDIAL<br/>2026
+            COPA<br/>DO MUNDO<br/>2026
           </div>
         </div>
 
@@ -262,6 +262,7 @@ function CountryDetailScreen({ countryCode, owned, setOwned, allCountries, group
 
   return (
     <div className="detail-screen screen-enter" key={countryCode}>
+      <div className="detail-card">
       <div className="detail-header">
         <div className="detail-topbar">
           <button className="back-btn" onClick={onBack} aria-label="Voltar">
@@ -305,6 +306,7 @@ function CountryDetailScreen({ countryCode, owned, setOwned, allCountries, group
             </button>
           );
         })}
+      </div>
       </div>
 
       <div className="detail-footer">
