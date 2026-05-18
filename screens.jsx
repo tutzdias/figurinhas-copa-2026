@@ -4,8 +4,9 @@ const { useState, useMemo, useEffect, useRef } = React;
 
 // ---------- helpers ----------
 function countryProgress(country, owned) {
+  const start = country.startAt ?? 1;
   let n = 0;
-  for (let i = 1; i <= country.count; i++) {
+  for (let i = start; i < start + country.count; i++) {
     if (owned[country.code + i]) n++;
   }
   return { owned: n, total: country.count, pct: country.count ? n / country.count : 0 };
@@ -299,7 +300,7 @@ function CountryDetailScreen({ countryCode, owned, setOwned, allCountries, group
 
       <div className="sticker-grid">
         {Array.from({ length: country.count }).map((_, i) => {
-          const n = i + 1;
+          const n = (country.startAt ?? 1) + i;
           const isOwned = !!owned[country.code + n];
           return (
             <button

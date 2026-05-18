@@ -155,7 +155,8 @@ function App() {
   const totalOwned = useMemo(() => {
     let n = 0;
     countries.forEach(c => {
-      for (let i = 1; i <= c.count; i++) if (owned[c.code + i]) n++;
+      const start = c.startAt ?? 1;
+      for (let i = start; i < start + c.count; i++) if (owned[c.code + i]) n++;
     });
     return n;
   }, [owned, countries]);

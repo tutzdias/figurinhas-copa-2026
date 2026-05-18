@@ -8,7 +8,7 @@ window.ALBUM = (() => {
       id: "ESP",
       label: "Especial",
       countries: [
-        { code: "FWC", name: "FIFA History", flag: "🏆", count: 19 },
+        { code: "FWC", name: "FIFA History", flag: "🏆", count: 20, startAt: 0 },
         { code: "CC",  name: "Coca-Cola",   flag: "🥤", count: 14 },
       ],
     },
