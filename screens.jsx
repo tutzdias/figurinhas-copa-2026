@@ -249,6 +249,31 @@ function CountryDetailScreen({ countryCode, owned, setOwned, allCountries, group
     return () => clearTimeout(t1);
   }, [pct, countryCode]);
 
+  // Micro-interaction: blur+fade swap on flag when country changes
+  const [displayedFlag, setDisplayedFlag] = useState(country.flag);
+  const [flagBlur, setFlagBlur] = useState(false);
+  useEffect(() => {
+    if (displayedFlag === country.flag) return;
+    setFlagBlur(true);
+    const t1 = setTimeout(() => {
+      setDisplayedFlag(country.flag);
+      const t2 = setTimeout(() => setFlagBlur(false), 30);
+      return () => clearTimeout(t2);
+    }, 180);
+    return () => clearTimeout(t1);
+  }, [country.flag]);
+
+  // Swipe direction: prev arrow tapped → content slides in from left
+  //                  next arrow tapped → content slides in from right
+  const prevIdxRef = useRef(idx);
+  let swipeDir = null;
+  if (prevIdxRef.current !== idx) {
+    swipeDir = idx > prevIdxRef.current ? "next" : "prev";
+  }
+  useEffect(() => {
+    prevIdxRef.current = idx;
+  });
+
   const toggleSticker = (n) => {
     const key = country.code + n;
     setOwned(prev => {
@@ -264,38 +289,48 @@ function CountryDetailScreen({ countryCode, owned, setOwned, allCountries, group
   const groupLabel = groupOf.id === "ESP" ? "Grupo Especial" : `Grupo ${groupOf.label}`;
 
   return (
-    <div className="detail-screen screen-enter" key={countryCode}>
+    <div className="detail-screen screen-enter">
       <div className="detail-card">
       <div className="detail-header">
         <div className="detail-topbar">
           <button className="back-btn" onClick={onBack} aria-label="Voltar">
             <BackIcon />
           </button>
-          <span className="country-flag-large">{country.flag}</span>
-        </div>
-
-        <div className="detail-eyebrow">{groupLabel} · {country.code}</div>
-        <h1 className="detail-name">{country.name}</h1>
-
-        <div className="detail-sub">
-          <span className="group-tag">
-            <b>{p.owned}</b> de {p.total} figurinhas
-          </span>
-          <span className={"pct" + (isComplete ? " full" : "") + (pctBlur ? " blur" : "")}>
-            {displayedPct}<span className="sign">%</span>
+          <span className={"country-flag-large" + (flagBlur ? " blur" : "")}>
+            {displayedFlag}
           </span>
         </div>
 
-        <div className="progress-bar"><div className="fill" style={{ width: `${pct}%` }} /></div>
+        <div
+          key={countryCode}
+          className={"detail-info-swipe" + (swipeDir ? " swipe-in-" + swipeDir : "")}
+        >
+          <div className="detail-eyebrow">{groupLabel} · {country.code}</div>
+          <h1 className="detail-name">{country.name}</h1>
 
-        {isComplete && (
-          <div className="complete-badge">
-            ✓ Completo
+          <div className="detail-sub">
+            <span className="group-tag">
+              <b>{p.owned}</b> de {p.total} figurinhas
+            </span>
+            <span className={"pct" + (isComplete ? " full" : "") + (pctBlur ? " blur" : "")}>
+              {displayedPct}<span className="sign">%</span>
+            </span>
           </div>
-        )}
+
+          <div className="progress-bar"><div className="fill" style={{ width: `${pct}%` }} /></div>
+
+          {isComplete && (
+            <div className="complete-badge">
+              ✓ Completo
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="sticker-grid">
+      <div
+        key={"st-" + countryCode}
+        className={"sticker-grid" + (swipeDir ? " swipe-in-" + swipeDir : "")}
+      >
         {Array.from({ length: country.count }).map((_, i) => {
           const n = (country.startAt ?? 1) + i;
           const isOwned = !!owned[country.code + n];

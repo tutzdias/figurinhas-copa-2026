@@ -104,11 +104,11 @@ input {
 /* Background video */
 .home-video {
   position: absolute;
-  top: 62%;
+  top: 70%;
   left: 75%;
   transform: translate(-50%, -50%);
-  width: 130%;
-  height: 91%;
+  width: 169%;
+  height: 118%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -703,6 +703,35 @@ input {
 .country-flag-large {
   font-size: 28px;
   line-height: 1;
+  display: inline-block;
+  transition: filter 180ms cubic-bezier(0.4, 0, 0.2, 1), opacity 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.country-flag-large.blur {
+  filter: blur(10px);
+  opacity: 0.5;
+}
+
+/* Swipe-in animations on country navigation */
+@keyframes detailSwipeInNext {
+  from { transform: translateX(48px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes detailSwipeInPrev {
+  from { transform: translateX(-48px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+.detail-info-swipe.swipe-in-next,
+.sticker-grid.swipe-in-next {
+  animation: detailSwipeInNext 340ms cubic-bezier(0.32, 0.72, 0.24, 1) both;
+}
+.detail-info-swipe.swipe-in-prev,
+.sticker-grid.swipe-in-prev {
+  animation: detailSwipeInPrev 340ms cubic-bezier(0.32, 0.72, 0.24, 1) both;
+}
+/* Slight stagger so stickers trail the header info */
+.sticker-grid.swipe-in-next,
+.sticker-grid.swipe-in-prev {
+  animation-delay: 40ms;
 }
 
 .detail-eyebrow {
