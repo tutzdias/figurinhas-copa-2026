@@ -243,9 +243,9 @@ function CountryDetailScreen({ countryCode, owned, setOwned, allCountries, group
     setPctBlur(true);
     const t1 = setTimeout(() => {
       setDisplayedPct(pct);
-      const t2 = setTimeout(() => setPctBlur(false), 60);
+      const t2 = setTimeout(() => setPctBlur(false), 30);
       return () => clearTimeout(t2);
-    }, 320);
+    }, 180);
     return () => clearTimeout(t1);
   }, [pct, countryCode]);
 

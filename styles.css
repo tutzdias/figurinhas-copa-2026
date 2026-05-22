@@ -596,7 +596,7 @@ input {
   position: relative;
   width: 100%;
   aspect-ratio: 1;
-  border-radius: 50%;
+  border-radius: 18px;
   background: #fff;
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);
   display: flex;
@@ -667,7 +667,7 @@ input {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: var(--color-darker);
+  background: #1A1A1A;
   padding-bottom: 88px; /* footer height */
 }
 
@@ -740,11 +740,11 @@ input {
   font-weight: 800;
   letter-spacing: -0.03em;
   color: #111;
-  transition: filter 320ms cubic-bezier(0.4, 0, 0.2, 1), opacity 320ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: filter 180ms cubic-bezier(0.4, 0, 0.2, 1), opacity 180ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 .detail-sub .pct.blur {
-  filter: blur(4px);
-  opacity: 0.7;
+  filter: blur(10px);
+  opacity: 0.5;
 }
 .detail-sub .pct.full { color: #111; }
 .detail-sub .pct .sign { font-size: 22px; font-weight: 700; color: var(--color-text-secondary); }
@@ -831,10 +831,10 @@ input {
   width: 100%;
   max-width: 430px;
   padding: 16px 18px 22px;
-  background:
-    radial-gradient(ellipse at 70% 20%, rgba(212,244,85,0.08), transparent 55%),
-    radial-gradient(ellipse at 20% 80%, rgba(255,255,255,0.03), transparent 60%),
-    var(--color-darker);
+  background-color: #1A1A1A;
+  background-image: none;
+  box-shadow: none;
+  border: none;
   display: flex;
   align-items: center;
   gap: 10px;
