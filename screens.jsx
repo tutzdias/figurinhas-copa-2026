@@ -27,9 +27,8 @@ function HomeScreen({ owned, totalOwned, total, countries, onSeeAll, onLogout, u
   return (
     <div className="home screen-enter">
       <div className="home-bg" />
-      <div className="home-trophy" aria-hidden>
-        <div className="home-trophy-glow" />
-        <img src="assets/trophy.webp" alt="" />
+      <div className="home-video" aria-hidden>
+        <video src="uploads/Fixes___remove_the_music__th.mp4" autoPlay loop muted playsInline />
       </div>
       {is100 && (
         <div className="confetti" aria-hidden>
@@ -139,20 +138,23 @@ function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelect
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
-        <div className="view-toggle">
+        <div className="view-toggle" data-mode={mode}>
+          <div className="view-toggle-indicator" aria-hidden />
           <button
-            className={mode === "group" ? "active" : ""}
+            className={"view-toggle-opt" + (mode === "group" ? " active" : "")}
             onClick={() => setMode("group")}
             aria-label="Por grupo"
             title="Por grupo"
+            aria-pressed={mode === "group"}
           >
             <GridIcon active={mode === "group"} />
           </button>
           <button
-            className={mode === "az" ? "active" : ""}
+            className={"view-toggle-opt" + (mode === "az" ? " active" : "")}
             onClick={() => setMode("az")}
             aria-label="A–Z"
             title="A–Z"
+            aria-pressed={mode === "az"}
           >
             <AzIcon active={mode === "az"} />
           </button>
@@ -241,9 +243,9 @@ function CountryDetailScreen({ countryCode, owned, setOwned, allCountries, group
     setPctBlur(true);
     const t1 = setTimeout(() => {
       setDisplayedPct(pct);
-      const t2 = setTimeout(() => setPctBlur(false), 40);
+      const t2 = setTimeout(() => setPctBlur(false), 60);
       return () => clearTimeout(t2);
-    }, 180);
+    }, 320);
     return () => clearTimeout(t1);
   }, [pct, countryCode]);
 
