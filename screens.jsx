@@ -21,18 +21,6 @@ function statusOf(p) {
 // ---------- HOME ----------
 function HomeScreen({ owned, totalOwned, total, countries, onSeeAll, onLogout, userEmail }) {
   const pct = total ? Math.round((totalOwned / total) * 100) : 0;
-  const missing = total - totalOwned;
-  const stats = useMemo(() => {
-    let complete = 0, started = 0, notStarted = 0;
-    countries.forEach(c => {
-      const p = countryProgress(c, owned);
-      const s = statusOf(p);
-      if (s === "complete") complete++;
-      else if (s === "in-progress") started++;
-      else notStarted++;
-    });
-    return { complete, started, notStarted };
-  }, [owned, countries]);
 
   const is100 = pct === 100 && total > 0;
 
@@ -57,7 +45,7 @@ function HomeScreen({ owned, totalOwned, total, countries, onSeeAll, onLogout, u
 
       <div className="home-content">
         <div className="home-topbar">
-          <div className="home-eyebrow"><span className="dot" /> AO VIVO · ALBUM 2026</div>
+          <div className="home-eyebrow">ALBUM 2026</div>
           <button className="home-logout" onClick={onLogout} title={userEmail || "Sair"}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -86,20 +74,7 @@ function HomeScreen({ owned, totalOwned, total, countries, onSeeAll, onLogout, u
           </div>
         </div>
 
-        <div className="home-stats">
-          <div className="home-stat">
-            <span className="stat-label">Faltantes</span>
-            <span className="stat-value">{missing}</span>
-          </div>
-          <div className="home-stat">
-            <span className="stat-label">Completos</span>
-            <span className="stat-value">{stats.complete}<span className="sub">/ {countries.length}</span></span>
-          </div>
-          <div className="home-stat">
-            <span className="stat-label">Iniciados</span>
-            <span className="stat-value">{stats.started}<span className="sub">/ {countries.length}</span></span>
-          </div>
-        </div>
+        <div className="home-stats" />
 
         <button className="home-cta" onClick={onSeeAll}>
           Ver Todos os Países
@@ -139,14 +114,12 @@ function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelect
 
   return (
     <div className="list-screen screen-enter">
+      <div className="list-sticky">
       <div className="list-header">
         <div className="list-header-top">
           <button className="icon-btn" onClick={onBack} aria-label="Voltar">
             <BackIcon />
           </button>
-          <div className="home-stamp" style={{textAlign: "right"}}>
-            CATÁLOGO<br/>901 figurinhas
-          </div>
         </div>
         <h1 className="list-title">Todos os Países</h1>
         <div className="list-counter">
@@ -185,6 +158,7 @@ function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelect
           </button>
         </div>
       </div>
+      </div>
 
       {nothing && <div className="empty">Nenhum país encontrado.</div>}
 
@@ -201,10 +175,10 @@ function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelect
           <div key={group.id} className="group-section">
             <div className="group-header">
               <div className="group-label">{groupLabel}</div>
-              {!group.special && (
-                <div className={"group-status " + (allComplete ? "complete" : anyOwned ? "in-progress" : "")}>
+              {!group.special && allComplete && (
+                <div className="group-status complete">
                   <span className="dot" />
-                  {allComplete ? "Completo" : anyOwned ? "Em andamento" : "Não iniciado"}
+                  Completo
                 </div>
               )}
             </div>
@@ -252,6 +226,27 @@ function CountryDetailScreen({ countryCode, owned, setOwned, allCountries, group
   const pct = Math.round(p.pct * 100);
   const isComplete = pct === 100;
 
+  // Micro-interaction: blur swap on percentage change
+  const [displayedPct, setDisplayedPct] = useState(pct);
+  const [pctBlur, setPctBlur] = useState(false);
+  const lastCountry = useRef(countryCode);
+  useEffect(() => {
+    if (lastCountry.current !== countryCode) {
+      lastCountry.current = countryCode;
+      setDisplayedPct(pct);
+      setPctBlur(false);
+      return;
+    }
+    if (displayedPct === pct) return;
+    setPctBlur(true);
+    const t1 = setTimeout(() => {
+      setDisplayedPct(pct);
+      const t2 = setTimeout(() => setPctBlur(false), 40);
+      return () => clearTimeout(t2);
+    }, 180);
+    return () => clearTimeout(t1);
+  }, [pct, countryCode]);
+
   const toggleSticker = (n) => {
     const key = country.code + n;
     setOwned(prev => {
@@ -284,8 +279,8 @@ function CountryDetailScreen({ countryCode, owned, setOwned, allCountries, group
           <span className="group-tag">
             <b>{p.owned}</b> de {p.total} figurinhas
           </span>
-          <span className={"pct" + (isComplete ? " full" : "")}>
-            {pct}<span className="sign">%</span>
+          <span className={"pct" + (isComplete ? " full" : "") + (pctBlur ? " blur" : "")}>
+            {displayedPct}<span className="sign">%</span>
           </span>
         </div>
 

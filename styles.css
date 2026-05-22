@@ -49,10 +49,11 @@ html, body {
 .app-shell {
   width: 100%;
   max-width: 430px;
-  min-height: 100vh;
+  height: 100vh;
   background: var(--color-bg);
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
@@ -369,10 +370,17 @@ input {
   background: var(--color-bg);
 }
 
+.list-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--color-bg);
+}
+
 .list-header {
   background: var(--color-dark);
   color: var(--color-text-inverse);
-  padding: 28px 24px 36px;
+  padding: 28px 24px 48px;
   border-bottom-left-radius: 24px;
   border-bottom-right-radius: 24px;
 }
@@ -430,16 +438,18 @@ input {
 }
 
 .list-controls {
-  padding: 16px 20px 0;
+  padding: 16px 20px 16px;
   display: flex;
+  align-items: center;
   gap: 10px;
-  margin-top: -22px;
+  margin-top: -36px;
   position: relative;
   z-index: 2;
 }
 
 .search-wrap {
-  flex: 1;
+  flex: 0 1 60%;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -462,13 +472,16 @@ input {
 
 .view-toggle {
   display: flex;
+  align-items: center;
   background: #fff;
   border-radius: var(--radius-pill);
   padding: 4px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  flex: 1 0 auto;
 }
 .view-toggle button {
-  width: 40px;
+  flex: 1 1 0;
+  min-width: 56px;
   height: 36px;
   border-radius: var(--radius-pill);
   display: flex;
@@ -578,19 +591,18 @@ input {
 .country-circle.zero .pct-fg { color: rgba(0,0,0,0.45); text-shadow: none; }
 
 .country-circle.complete {
-  background: #fff;
-  box-shadow: 0 0 0 3px var(--color-accent), 0 4px 14px rgba(212,244,85,0.45);
+  background: var(--color-accent);
+  box-shadow: 0 4px 14px rgba(212,244,85,0.45);
 }
 .country-circle.complete .flag-bg {
-  filter: blur(2px);
-  opacity: 0.7;
+  display: none;
 }
 .country-circle.complete .pct-fg {
-  font-size: 22px;
+  font-size: 24px;
+  font-weight: 800;
   color: #111;
-  background: var(--color-accent);
-  width: 28px; height: 28px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
+  background: transparent;
+  width: auto; height: auto;
   text-shadow: none;
 }
 
@@ -686,6 +698,11 @@ input {
   font-weight: 800;
   letter-spacing: -0.03em;
   color: #111;
+  transition: filter 180ms ease, opacity 180ms ease;
+}
+.detail-sub .pct.blur {
+  filter: blur(8px);
+  opacity: 0.55;
 }
 .detail-sub .pct.full { color: #111; }
 .detail-sub .pct .sign { font-size: 22px; font-weight: 700; color: var(--color-text-secondary); }
