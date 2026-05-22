@@ -22,6 +22,17 @@ function statusOf(p) {
 function HomeScreen({ owned, totalOwned, total, countries, onSeeAll, onLogout, userEmail }) {
   const pct = total ? Math.round((totalOwned / total) * 100) : 0;
   const missing = total - totalOwned;
+  const stats = useMemo(() => {
+    let complete = 0, started = 0, notStarted = 0;
+    countries.forEach(c => {
+      const p = countryProgress(c, owned);
+      const s = statusOf(p);
+      if (s === "complete") complete++;
+      else if (s === "in-progress") started++;
+      else notStarted++;
+    });
+    return { complete, started, notStarted };
+  }, [owned, countries]);
 
   const is100 = pct === 100 && total > 0;
 
@@ -46,7 +57,7 @@ function HomeScreen({ owned, totalOwned, total, countries, onSeeAll, onLogout, u
 
       <div className="home-content">
         <div className="home-topbar">
-          <div className="home-eyebrow" />
+          <div className="home-eyebrow"><span className="dot" /> AO VIVO · ALBUM 2026</div>
           <button className="home-logout" onClick={onLogout} title={userEmail || "Sair"}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -80,6 +91,14 @@ function HomeScreen({ owned, totalOwned, total, countries, onSeeAll, onLogout, u
             <span className="stat-label">Faltantes</span>
             <span className="stat-value">{missing}</span>
           </div>
+          <div className="home-stat">
+            <span className="stat-label">Completos</span>
+            <span className="stat-value">{stats.complete}<span className="sub">/ {countries.length}</span></span>
+          </div>
+          <div className="home-stat">
+            <span className="stat-label">Iniciados</span>
+            <span className="stat-value">{stats.started}<span className="sub">/ {countries.length}</span></span>
+          </div>
         </div>
 
         <button className="home-cta" onClick={onSeeAll}>
@@ -97,16 +116,6 @@ function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelect
   const [mode, setMode] = useState("group"); // "group" | "az"
 
   const pct = total ? Math.round((totalOwned / total) * 100) : 0;
-
-  const countryStats = useMemo(() => {
-    const all = groups.flatMap(g => g.countries);
-    let complete = 0;
-    all.forEach(c => {
-      const p = countryProgress(c, owned);
-      if (p.pct === 1) complete++;
-    });
-    return { complete, total: all.length };
-  }, [groups, owned]);
 
   const filteredGroups = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -130,22 +139,20 @@ function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelect
 
   return (
     <div className="list-screen screen-enter">
-      <div className="list-sticky">
       <div className="list-header">
         <div className="list-header-top">
           <button className="icon-btn" onClick={onBack} aria-label="Voltar">
             <BackIcon />
           </button>
+          <div className="home-stamp" style={{textAlign: "right"}}>
+            CATÁLOGO<br/>901 figurinhas
+          </div>
         </div>
         <h1 className="list-title">Todos os Países</h1>
         <div className="list-counter">
-          <div className="list-stat">
-            <span className="stat-label">Países Completos</span>
-            <span className="stat-value">
-              {countryStats.complete}<span className="sub">/ {countryStats.total}</span>
-            </span>
-          </div>
-          <div className="list-pct">{pct}%</div>
+          <span className="big">{totalOwned} / {total}</span>
+          <span className="sep" />
+          <span className="pct">{pct}%</span>
         </div>
       </div>
 
@@ -177,7 +184,6 @@ function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelect
             <AzIcon active={mode === "az"} />
           </button>
         </div>
-      </div>
       </div>
 
       {nothing && <div className="empty">Nenhum país encontrado.</div>}
