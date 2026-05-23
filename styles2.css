@@ -113,6 +113,15 @@
   letter-spacing: -0.01em;
 }
 
+.home2-label {
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #888888;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
 .home2-pct {
   display: flex;
   align-items: baseline;
@@ -121,23 +130,16 @@
   color: #D4F455;
   letter-spacing: -0.06em;
   line-height: 0.85;
-}
-
-.home2-label {
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: #888888;
-  font-weight: 500;
-  margin-top: 8px;
   margin-bottom: 20px;
 }
 
 .home2-pct-num {
-  font-size: clamp(144px, 42vw, 216px);
+  font-size: clamp(187px, 55vw, 281px);
   font-weight: 800;
   letter-spacing: -0.06em;
   color: #000000;
+  --number-flow-mask-height: 0em;
+  --number-flow-mask-width: 0em;
 }
 
 .home2-pct-sign {
