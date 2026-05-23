@@ -45,18 +45,18 @@
             </button>
           </div>
 
+          <div className="home2-count">
+            <number-flow ref={countRef} class="count-amount" />
+            <span className="count-total">/{total}</span>
+          </div>
+
           <div className="home2-spacer" />
 
-          <div className="home2-stats">
-            <div className="home2-count">
-              <number-flow ref={countRef} class="count-amount" />
-              <span className="count-total">/{total}</span>
-            </div>
-            <div className="home2-pct">
-              <number-flow ref={pctRef} class="home2-pct-num" />
-              <span className="home2-pct-sign">%</span>
-            </div>
+          <div className="home2-pct">
+            <number-flow ref={pctRef} class="home2-pct-num" />
+            <span className="home2-pct-sign">%</span>
           </div>
+          <div className="home2-label">Conclusão do Álbum</div>
 
           <button className="home2-cta" onClick={onSeeAll}>
             Ver Todos os Países

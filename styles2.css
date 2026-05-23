@@ -88,15 +88,7 @@
 
 .home2-spacer { flex: 1; }
 
-/* ---- Stats (count + percentage) — original DM Sans styles ---- */
-.home2-stats {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 20px;
-  margin-bottom: 40px;
-}
-
+/* ---- Count (top of screen) ---- */
 .home2-count {
   font-family: "DM Sans", system-ui, sans-serif;
   font-weight: 800;
@@ -105,6 +97,7 @@
   display: inline-flex;
   align-items: baseline;
   line-height: 0.9;
+  margin-top: 16px;
 }
 .home2-count .count-amount {
   font-size: 66px;
@@ -130,10 +123,21 @@
   line-height: 0.85;
 }
 
+.home2-label {
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #888888;
+  font-weight: 500;
+  margin-top: 8px;
+  margin-bottom: 20px;
+}
+
 .home2-pct-num {
   font-size: clamp(144px, 42vw, 216px);
   font-weight: 800;
   letter-spacing: -0.06em;
+  color: #000000;
 }
 
 .home2-pct-sign {
@@ -141,7 +145,7 @@
   margin-left: 4px;
   font-weight: 700;
   letter-spacing: -0.04em;
-  color: #D4F455;
+  color: #000000;
 }
 
 /* ---- CTA (pill, original-home style) ---- */
