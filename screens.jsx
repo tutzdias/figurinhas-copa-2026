@@ -436,4 +436,7 @@ function CountryDetailScreen({ countryCode, owned, setOwned, allCountries, group
   );
 }
 
-Object.assign(window, { HomeScreen, AllCountriesScreen, CountryDetailScreen, countryProgress, statusOf });
+Object.assign(window, {
+  HomeScreen, AllCountriesScreen, CountryDetailScreen, countryProgress, statusOf,
+  flowUpdate, flowAnimate,
+});

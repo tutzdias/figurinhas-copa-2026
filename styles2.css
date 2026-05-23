@@ -1,0 +1,175 @@
+/* styles2.css — overrides for index2.html (alternate Home only).
+   Scoped to .home2 so all other screens keep their original look. */
+
+/* Make --pct interpolable so the aura animates smoothly when progress changes */
+@property --pct {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+.app-shell:has(.home2) {
+  background: #F2F2F0;
+}
+
+.home2 {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #F2F2F0;
+  color: #1A1A1A;
+  position: relative;
+  overflow: hidden;
+  font-family: "DM Sans", system-ui, sans-serif;
+  transition: --pct 0.6s ease;
+}
+
+/* Radial aura gradient.
+   Stop positions are derived from --pct (0–100):
+   - green: 0% at pct ≤ 50; rises to 100% at pct = 100
+   - cream: 13% at pct=0; 100% at pct ≥ 50                                  */
+.home2-aura {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at center,
+    #D4F455 max(0%, calc(var(--pct, 0) * 2% - 100%)),
+    #F2F2F0 min(100%, calc(var(--pct, 0) * 1.74% + 13%))
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.home2-content {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 28px 32px;
+}
+
+/* ---- Top stamp + logout (original DM Sans styles) ---- */
+.home2-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.home2-stamp {
+  font-family: "DM Sans", system-ui, sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  font-weight: 500;
+  color: #888888;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.home2-logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.06);
+  color: #1A1A1A;
+  font-family: "DM Sans", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.home2-logout:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.home2-spacer { flex: 1; }
+
+/* ---- Stats (count + percentage) — original DM Sans styles ---- */
+.home2-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.home2-count {
+  font-family: "DM Sans", system-ui, sans-serif;
+  font-weight: 800;
+  color: #1A1A1A;
+  letter-spacing: -0.02em;
+  display: inline-flex;
+  align-items: baseline;
+  line-height: 0.9;
+}
+.home2-count .count-amount {
+  font-size: 66px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #1A1A1A;
+}
+.home2-count .count-total {
+  font-size: 22px;
+  font-weight: 600;
+  color: #888888;
+  margin-left: 2px;
+  letter-spacing: -0.01em;
+}
+
+.home2-pct {
+  display: flex;
+  align-items: baseline;
+  font-family: "DM Sans", system-ui, sans-serif;
+  font-weight: 800;
+  color: #D4F455;
+  letter-spacing: -0.06em;
+  line-height: 0.85;
+}
+
+.home2-pct-num {
+  font-size: clamp(144px, 42vw, 216px);
+  font-weight: 800;
+  letter-spacing: -0.06em;
+}
+
+.home2-pct-sign {
+  font-size: clamp(40px, 11vw, 56px);
+  margin-left: 4px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: #D4F455;
+}
+
+/* ---- CTA (pill, original-home style) ---- */
+.home2-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 22px 16px 26px;
+  background: #fff;
+  color: #111;
+  border: none;
+  border-radius: 999px;
+  font-family: "DM Sans", system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.home2-cta:hover { background: #D4F455; }
+.home2-cta:active { transform: scale(0.98); }
+.home2-cta .arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #111;
+  color: #fff;
+}
