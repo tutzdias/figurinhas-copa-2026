@@ -260,7 +260,7 @@ input {
 
 .home-percent {
   display: flex;
-  align-items: flex-end;
+  align-items: baseline;
   line-height: 0.82;
   margin-top: 4px;
 }
@@ -278,7 +278,6 @@ input {
   letter-spacing: -0.04em;
   color: var(--color-accent);
   margin-left: 2px;
-  padding-bottom: 8px;
 }
 
 .home-percent.celebrate .pct-num,
@@ -672,21 +671,74 @@ input {
 }
 
 .detail-card {
+  position: relative;
   background: var(--color-bg);
   border-radius: 0 0 28px 28px;
   padding-bottom: 32px;
   box-shadow: 0 12px 24px rgba(0,0,0,0.18);
+  overflow: hidden;
 }
 
-.detail-header {
+.detail-static-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 20px 24px 0;
+  position: relative;
+  z-index: 10;
+}
+
+.detail-slide-stage {
+  position: relative;
+}
+
+.detail-pane {
+  /* normal flow when current; absolute when exiting */
+}
+.detail-pane.exiting-next,
+.detail-pane.exiting-prev {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+.detail-pane.current {
+  z-index: 2;
+}
+
+@keyframes paneSlideInNext {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes paneSlideOutNext {
+  from { transform: translateX(0);    opacity: 1; }
+  to   { transform: translateX(-100%); opacity: 0; }
+}
+@keyframes paneSlideInPrev {
+  from { transform: translateX(-100%); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+@keyframes paneSlideOutPrev {
+  from { transform: translateX(0);   opacity: 1; }
+  to   { transform: translateX(100%); opacity: 0; }
+}
+.detail-pane.entering-next { animation: paneSlideInNext 400ms cubic-bezier(0.32, 0.72, 0.24, 1) both; }
+.detail-pane.exiting-next  { animation: paneSlideOutNext 400ms cubic-bezier(0.32, 0.72, 0.24, 1) both; }
+.detail-pane.entering-prev { animation: paneSlideInPrev 400ms cubic-bezier(0.32, 0.72, 0.24, 1) both; }
+.detail-pane.exiting-prev  { animation: paneSlideOutPrev 400ms cubic-bezier(0.32, 0.72, 0.24, 1) both; }
+
+.detail-header {
+  padding: 18px 24px 0;
 }
 
 .detail-topbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   margin-bottom: 18px;
+  min-height: 40px;
 }
 
 .back-btn {
@@ -704,35 +756,9 @@ input {
   font-size: 28px;
   line-height: 1;
   display: inline-block;
-  transition: filter 180ms cubic-bezier(0.4, 0, 0.2, 1), opacity 180ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-.country-flag-large.blur {
-  filter: blur(10px);
-  opacity: 0.5;
 }
 
-/* Swipe-in animations on country navigation */
-@keyframes detailSwipeInNext {
-  from { transform: translateX(48px); opacity: 0; }
-  to   { transform: translateX(0);    opacity: 1; }
-}
-@keyframes detailSwipeInPrev {
-  from { transform: translateX(-48px); opacity: 0; }
-  to   { transform: translateX(0);     opacity: 1; }
-}
-.detail-info-swipe.swipe-in-next,
-.sticker-grid.swipe-in-next {
-  animation: detailSwipeInNext 340ms cubic-bezier(0.32, 0.72, 0.24, 1) both;
-}
-.detail-info-swipe.swipe-in-prev,
-.sticker-grid.swipe-in-prev {
-  animation: detailSwipeInPrev 340ms cubic-bezier(0.32, 0.72, 0.24, 1) both;
-}
-/* Slight stagger so stickers trail the header info */
-.sticker-grid.swipe-in-next,
-.sticker-grid.swipe-in-prev {
-  animation-delay: 40ms;
-}
+/* (legacy detail-info-swipe animations removed — superseded by slide-pane) */
 
 .detail-eyebrow {
   font-size: 11px;
@@ -769,11 +795,8 @@ input {
   font-weight: 800;
   letter-spacing: -0.03em;
   color: #111;
-  transition: filter 180ms cubic-bezier(0.4, 0, 0.2, 1), opacity 180ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-.detail-sub .pct.blur {
-  filter: blur(10px);
-  opacity: 0.5;
+  display: inline-flex;
+  align-items: baseline;
 }
 .detail-sub .pct.full { color: #111; }
 .detail-sub .pct .sign { font-size: 22px; font-weight: 700; color: var(--color-text-secondary); }

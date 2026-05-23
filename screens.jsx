@@ -2,6 +2,30 @@
 
 const { useState, useMemo, useEffect, useRef } = React;
 
+// ---------- NumberFlow helper ----------
+// Safely call <number-flow>'s .update(value); waits for custom-element upgrade if needed.
+function flowUpdate(el, value) {
+  if (!el) return;
+  if (typeof el.update === "function") {
+    el.update(value);
+    return;
+  }
+  if (window.customElements && customElements.whenDefined) {
+    customElements.whenDefined("number-flow").then(() => {
+      if (typeof el.update === "function") el.update(value);
+    });
+  }
+}
+
+// Animate from `from` to `to`. If equal, just sets the value (no animation).
+function flowAnimate(el, from, to) {
+  if (!el) return;
+  flowUpdate(el, from);
+  if (from !== to) {
+    requestAnimationFrame(() => flowUpdate(el, to));
+  }
+}
+
 // ---------- helpers ----------
 function countryProgress(country, owned) {
   const start = country.startAt ?? 1;
@@ -19,10 +43,24 @@ function statusOf(p) {
 }
 
 // ---------- HOME ----------
-function HomeScreen({ owned, totalOwned, total, countries, onSeeAll, onLogout, userEmail }) {
+function HomeScreen({ owned, totalOwned, total, countries, onSeeAll, onLogout, userEmail, lastSeen }) {
   const pct = total ? Math.round((totalOwned / total) * 100) : 0;
 
   const is100 = pct === 100 && total > 0;
+
+  // Animate figurinhas + percentage when user returns with changed values
+  const numRef = useRef(null);
+  const pctRef = useRef(null);
+  useEffect(() => {
+    const from = lastSeen.totalOwned == null ? totalOwned : lastSeen.totalOwned;
+    flowAnimate(numRef.current, from, totalOwned);
+    lastSeen.totalOwned = totalOwned;
+  }, []); // eslint-disable-line
+  useEffect(() => {
+    const from = lastSeen.pct == null ? pct : lastSeen.pct;
+    flowAnimate(pctRef.current, from, pct);
+    lastSeen.pct = pct;
+  }, []); // eslint-disable-line
 
   return (
     <div className="home screen-enter">
@@ -58,7 +96,7 @@ function HomeScreen({ owned, totalOwned, total, countries, onSeeAll, onLogout, u
         <div className="home-headline">
           <div className="home-label">Figurinhas Adquiridas</div>
           <div className="home-figurinhas">
-            <span className="num">{totalOwned}</span>
+            <number-flow ref={numRef} class="num" />
             <span className="total">/{total}</span>
           </div>
         </div>
@@ -68,7 +106,7 @@ function HomeScreen({ owned, totalOwned, total, countries, onSeeAll, onLogout, u
         <div className="home-percent-block">
           <div className="home-label">Conclusão do Álbum</div>
           <div className={"home-percent" + (is100 ? " celebrate" : "")}>
-            <span className="pct-num">{pct}</span>
+            <number-flow ref={pctRef} class="pct-num" />
             <span className="pct-sign">%</span>
           </div>
         </div>
@@ -85,11 +123,25 @@ function HomeScreen({ owned, totalOwned, total, countries, onSeeAll, onLogout, u
 }
 
 // ---------- ALL COUNTRIES ----------
-function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelectCountry }) {
+function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelectCountry, lastSeen }) {
   const [query, setQuery] = useState("");
   const [mode, setMode] = useState("group"); // "group" | "az"
 
   const pct = total ? Math.round((totalOwned / total) * 100) : 0;
+
+  // Animate counter + percentage when user returns with changed values
+  const ownedRef = useRef(null);
+  const pctRef = useRef(null);
+  useEffect(() => {
+    const from = lastSeen.totalOwned == null ? totalOwned : lastSeen.totalOwned;
+    flowAnimate(ownedRef.current, from, totalOwned);
+    lastSeen.totalOwned = totalOwned;
+  }, []); // eslint-disable-line
+  useEffect(() => {
+    const from = lastSeen.pct == null ? pct : lastSeen.pct;
+    flowAnimate(pctRef.current, from, pct);
+    lastSeen.pct = pct;
+  }, []); // eslint-disable-line
 
   const filteredGroups = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -122,9 +174,11 @@ function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelect
         </div>
         <h1 className="list-title">Todos os Países</h1>
         <div className="list-counter">
-          <span className="big">{totalOwned} / {total}</span>
+          <span className="big">
+            <number-flow ref={ownedRef} /> / {total}
+          </span>
           <span className="sep" />
-          <span className="pct">{pct}%</span>
+          <span className="pct"><number-flow ref={pctRef} />%</span>
         </div>
       </div>
 
@@ -217,94 +271,19 @@ function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelect
 }
 
 // ---------- COUNTRY DETAIL ----------
-function CountryDetailScreen({ countryCode, owned, setOwned, allCountries, groups, onBack, onSelectCountry, onSeeAll }) {
-  const idx = allCountries.findIndex(c => c.code === countryCode);
-  const country = allCountries[idx];
-  const prev = idx > 0 ? allCountries[idx - 1] : null;
-  const next = idx < allCountries.length - 1 ? allCountries[idx + 1] : null;
-
-  // recompute progress for THIS country
+function CountryPane({ code, allCountries, groups, owned, onToggle, numberFlowRef, interactive }) {
+  const country = allCountries.find(c => c.code === code);
+  if (!country) return null;
   const p = countryProgress(country, owned);
   const pct = Math.round(p.pct * 100);
   const isComplete = pct === 100;
-
-  // Micro-interaction: blur swap on percentage change
-  const [displayedPct, setDisplayedPct] = useState(pct);
-  const [pctBlur, setPctBlur] = useState(false);
-  const lastCountry = useRef(countryCode);
-  useEffect(() => {
-    if (lastCountry.current !== countryCode) {
-      lastCountry.current = countryCode;
-      setDisplayedPct(pct);
-      setPctBlur(false);
-      return;
-    }
-    if (displayedPct === pct) return;
-    setPctBlur(true);
-    const t1 = setTimeout(() => {
-      setDisplayedPct(pct);
-      const t2 = setTimeout(() => setPctBlur(false), 30);
-      return () => clearTimeout(t2);
-    }, 180);
-    return () => clearTimeout(t1);
-  }, [pct, countryCode]);
-
-  // Micro-interaction: blur+fade swap on flag when country changes
-  const [displayedFlag, setDisplayedFlag] = useState(country.flag);
-  const [flagBlur, setFlagBlur] = useState(false);
-  useEffect(() => {
-    if (displayedFlag === country.flag) return;
-    setFlagBlur(true);
-    const t1 = setTimeout(() => {
-      setDisplayedFlag(country.flag);
-      const t2 = setTimeout(() => setFlagBlur(false), 30);
-      return () => clearTimeout(t2);
-    }, 180);
-    return () => clearTimeout(t1);
-  }, [country.flag]);
-
-  // Swipe direction: prev arrow tapped → content slides in from left
-  //                  next arrow tapped → content slides in from right
-  const prevIdxRef = useRef(idx);
-  let swipeDir = null;
-  if (prevIdxRef.current !== idx) {
-    swipeDir = idx > prevIdxRef.current ? "next" : "prev";
-  }
-  useEffect(() => {
-    prevIdxRef.current = idx;
-  });
-
-  const toggleSticker = (n) => {
-    const key = country.code + n;
-    setOwned(prev => {
-      const next = { ...prev };
-      if (next[key]) delete next[key];
-      else next[key] = true;
-      return next;
-    });
-  };
-
-  // Find group label
-  const groupOf = groups.find(g => g.countries.some(c => c.code === country.code));
+  const groupOf = groups.find(g => g.countries.some(c => c.code === code));
   const groupLabel = groupOf.id === "ESP" ? "Grupo Especial" : `Grupo ${groupOf.label}`;
 
   return (
-    <div className="detail-screen screen-enter">
-      <div className="detail-card">
+    <React.Fragment>
       <div className="detail-header">
-        <div className="detail-topbar">
-          <button className="back-btn" onClick={onBack} aria-label="Voltar">
-            <BackIcon />
-          </button>
-          <span className={"country-flag-large" + (flagBlur ? " blur" : "")}>
-            {displayedFlag}
-          </span>
-        </div>
-
-        <div
-          key={countryCode}
-          className={"detail-info-swipe" + (swipeDir ? " swipe-in-" + swipeDir : "")}
-        >
+        <div className="detail-info">
           <div className="detail-eyebrow">{groupLabel} · {country.code}</div>
           <h1 className="detail-name">{country.name}</h1>
 
@@ -312,25 +291,23 @@ function CountryDetailScreen({ countryCode, owned, setOwned, allCountries, group
             <span className="group-tag">
               <b>{p.owned}</b> de {p.total} figurinhas
             </span>
-            <span className={"pct" + (isComplete ? " full" : "") + (pctBlur ? " blur" : "")}>
-              {displayedPct}<span className="sign">%</span>
+            <span className={"pct" + (isComplete ? " full" : "")}>
+              {numberFlowRef
+                ? <number-flow ref={numberFlowRef} />
+                : <span>{pct}</span>}
+              <span className="sign">%</span>
             </span>
           </div>
 
           <div className="progress-bar"><div className="fill" style={{ width: `${pct}%` }} /></div>
 
           {isComplete && (
-            <div className="complete-badge">
-              ✓ Completo
-            </div>
+            <div className="complete-badge">✓ Completo</div>
           )}
         </div>
       </div>
 
-      <div
-        key={"st-" + countryCode}
-        className={"sticker-grid" + (swipeDir ? " swipe-in-" + swipeDir : "")}
-      >
+      <div className="sticker-grid">
         {Array.from({ length: country.count }).map((_, i) => {
           const n = (country.startAt ?? 1) + i;
           const isOwned = !!owned[country.code + n];
@@ -338,13 +315,102 @@ function CountryDetailScreen({ countryCode, owned, setOwned, allCountries, group
             <button
               key={n}
               className={"sticker" + (isOwned ? " owned" + (isComplete ? " accent" : "") : "")}
-              onClick={() => toggleSticker(n)}
+              onClick={interactive ? () => onToggle(country.code, n) : undefined}
+              tabIndex={interactive ? 0 : -1}
             >
               {n}
             </button>
           );
         })}
       </div>
+    </React.Fragment>
+  );
+}
+
+function CountryDetailScreen({ countryCode, owned, setOwned, allCountries, groups, onBack, onSelectCountry, onSeeAll }) {
+  const idx = allCountries.findIndex(c => c.code === countryCode);
+  const country = allCountries[idx];
+  const prev = idx > 0 ? allCountries[idx - 1] : null;
+  const next = idx < allCountries.length - 1 ? allCountries[idx + 1] : null;
+  const pct = Math.round(countryProgress(country, owned).pct * 100);
+
+  // NumberFlow for current pane's percentage
+  const numberFlowRef = useRef(null);
+  useEffect(() => {
+    flowUpdate(numberFlowRef.current, pct);
+  }, [pct, countryCode]);
+
+  // Slide-out + slide-in transition driven by arrow taps
+  const [exitingCode, setExitingCode] = useState(null);
+  const [direction, setDirection] = useState(null);
+  const prevCodeRef = useRef(countryCode);
+
+  useEffect(() => {
+    if (prevCodeRef.current === countryCode) return;
+    const oldIdx = allCountries.findIndex(c => c.code === prevCodeRef.current);
+    const dir = idx > oldIdx ? "next" : "prev";
+    setExitingCode(prevCodeRef.current);
+    setDirection(dir);
+    prevCodeRef.current = countryCode;
+    const t = setTimeout(() => {
+      setExitingCode(null);
+      setDirection(null);
+    }, 420);
+    return () => clearTimeout(t);
+  }, [countryCode]); // eslint-disable-line
+
+  const handleToggleSticker = (code, n) => {
+    const key = code + n;
+    setOwned(p => {
+      const nx = { ...p };
+      if (nx[key]) delete nx[key];
+      else nx[key] = true;
+      return nx;
+    });
+  };
+
+  return (
+    <div className="detail-screen screen-enter">
+      <div className="detail-card">
+        <div className="detail-static-row">
+          <button className="back-btn" onClick={onBack} aria-label="Voltar">
+            <BackIcon />
+          </button>
+          <span className="country-flag-large">{country.flag}</span>
+        </div>
+        <div className="detail-slide-stage">
+          {exitingCode && (
+            <div
+              key={"exit-" + exitingCode}
+              className={"detail-pane exiting exiting-" + direction}
+              aria-hidden
+            >
+              <CountryPane
+                code={exitingCode}
+                allCountries={allCountries}
+                groups={groups}
+                owned={owned}
+                onToggle={handleToggleSticker}
+                numberFlowRef={null}
+                interactive={false}
+              />
+            </div>
+          )}
+          <div
+            key={countryCode}
+            className={"detail-pane current" + (direction ? " entering-" + direction : "")}
+          >
+            <CountryPane
+              code={countryCode}
+              allCountries={allCountries}
+              groups={groups}
+              owned={owned}
+              onToggle={handleToggleSticker}
+              numberFlowRef={numberFlowRef}
+              interactive={true}
+            />
+          </div>
+        </div>
       </div>
 
       <div className="detail-footer">

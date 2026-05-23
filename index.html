@@ -23,6 +23,12 @@
   <script src="data.js"></script>
   <script src="supabase-client.js"></script>
 
+  <!-- NumberFlow (animated number swap) — vanilla custom element, no React-instance plumbing -->
+  <script type="module">
+    import 'https://esm.sh/number-flow@0.5';
+    window.dispatchEvent(new Event('numberflow-ready'));
+  </script>
+
   <!-- React components -->
   <script type="text/babel" src="icons.jsx"></script>
   <script type="text/babel" src="screens.jsx"></script>

@@ -161,6 +161,11 @@ function App() {
     return n;
   }, [owned, countries]);
 
+  // Last-seen values per screen so number-flow animates from the value the user
+  // last saw on that screen to the current value when they return.
+  const lastSeenHome = useRef({ totalOwned: null, pct: null });
+  const lastSeenAll = useRef({ totalOwned: null, pct: null });
+
   // ---- Render gates ----
   if (!authReady) {
     return <div className="app-shell"><LoadingScreen message="Iniciando…" /></div>;
@@ -185,6 +190,7 @@ function App() {
         onSeeAll={() => setRoute("all")}
         onLogout={handleLogout}
         userEmail={session.user.email}
+        lastSeen={lastSeenHome.current}
       />
     );
   } else if (route === "all") {
@@ -196,6 +202,7 @@ function App() {
         groups={groups}
         onBack={() => setRoute("home")}
         onSelectCountry={(code) => setRoute("country:" + code)}
+        lastSeen={lastSeenAll.current}
       />
     );
   } else if (route.startsWith("country:")) {
