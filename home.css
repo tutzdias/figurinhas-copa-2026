@@ -65,6 +65,29 @@
   line-height: 1.4;
   text-transform: uppercase;
 }
+.home2-stamp-line {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.home2-version {
+  font-weight: 600;
+  color: #1A1A1A;
+  letter-spacing: 0.05em;
+}
+.home2-version-dot {
+  opacity: 0.55;
+  letter-spacing: 0;
+}
+.home2-tagline {
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: #6b6b66;
+  text-transform: none;
+  line-height: 1.35;
+}
 
 .home2-logout {
   display: inline-flex;
@@ -180,4 +203,438 @@
   border-radius: 50%;
   background: #111;
   color: #fff;
+}
+
+/* ===== Shared-element transition: Home CTA → All-Countries header ===== */
+.shared-morph-root {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  overflow: hidden;
+}
+
+.shared-morph {
+  position: absolute;
+  overflow: hidden;
+  will-change: top, left, width, height, border-radius, background;
+  transition:
+    top 540ms cubic-bezier(0.65, 0, 0.35, 1),
+    left 540ms cubic-bezier(0.65, 0, 0.35, 1),
+    width 540ms cubic-bezier(0.65, 0, 0.35, 1),
+    height 540ms cubic-bezier(0.65, 0, 0.35, 1),
+    border-radius 540ms cubic-bezier(0.65, 0, 0.35, 1),
+    background 480ms cubic-bezier(0.65, 0, 0.35, 1) 40ms,
+    box-shadow 540ms ease;
+}
+
+/* "From" layer — the CTA pill content. */
+.shared-morph-from {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 22px 16px 26px;
+  color: #111;
+  font-family: "DM Sans", system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: opacity 220ms ease;
+  opacity: 1;
+}
+.shared-morph-from .arr {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #111;
+  color: #fff;
+  flex-shrink: 0;
+}
+.shared-morph.expanded .shared-morph-from {
+  opacity: 0;
+  transition-duration: 180ms;
+}
+
+/* "To" layer — the dark list-header content. */
+.shared-morph-to {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 24px 48px;
+  color: #ffffff;
+  font-family: "DM Sans", system-ui, sans-serif;
+  opacity: 0;
+  transition: opacity 320ms ease;
+}
+.shared-morph.expanded .shared-morph-to {
+  opacity: 1;
+  transition-delay: 240ms;
+}
+
+.shared-morph-to-top {
+  display: flex;
+  align-items: center;
+  margin-bottom: 22px;
+}
+.shared-morph-to .back {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+}
+.shared-morph-to h1 {
+  margin: 0;
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1;
+}
+.shared-morph-to .counter {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 14px;
+  font-weight: 500;
+}
+.shared-morph-to .counter .big {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.shared-morph-to .counter i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  align-self: center;
+}
+.shared-morph-to .counter .pct {
+  color: #D4F455;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+/* ===== Shared-element transition: Country square → Detail card ===== */
+.country-morph-root {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  overflow: hidden;
+}
+
+/* Dim the AllCountries screen behind the card so detail-screen's
+   dark background reads as continuous after the route swap. */
+.country-morph-backdrop {
+  position: absolute;
+  inset: 0;
+  background: #1A1A1A;
+  opacity: 0;
+  transition: opacity 540ms cubic-bezier(0.65, 0, 0.35, 1);
+}
+.country-morph-backdrop.on { opacity: 1; }
+
+.country-morph {
+  position: absolute;
+  overflow: hidden;
+  will-change: top, left, width, height, border-radius, background;
+  transition:
+    top 620ms cubic-bezier(0.65, 0, 0.35, 1),
+    left 620ms cubic-bezier(0.65, 0, 0.35, 1),
+    width 620ms cubic-bezier(0.65, 0, 0.35, 1),
+    height 620ms cubic-bezier(0.65, 0, 0.35, 1),
+    border-radius 620ms cubic-bezier(0.65, 0, 0.35, 1),
+    background 540ms cubic-bezier(0.65, 0, 0.35, 1) 40ms,
+    box-shadow 620ms ease;
+}
+
+/* "From" layer — country-square content */
+.country-morph-from {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 220ms ease;
+  opacity: 1;
+}
+.country-morph-from .flag-bg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 56px;
+  line-height: 1;
+  filter: blur(3px) saturate(1.1);
+  opacity: 0.55;
+  transform: scale(1.2);
+}
+.country-morph-from.zero .flag-bg {
+  filter: blur(3px) grayscale(0.85);
+  opacity: 0.35;
+}
+.country-morph-from .pct-fg {
+  position: relative;
+  font-weight: 800;
+  font-size: 17px;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.65);
+}
+.country-morph-from.zero .pct-fg {
+  color: rgba(0, 0, 0, 0.45);
+  text-shadow: none;
+}
+.country-morph-from.complete .flag-bg { display: none; }
+.country-morph-from.complete .pct-fg {
+  font-size: 24px;
+  color: #111;
+  text-shadow: none;
+}
+.country-morph.expanded .country-morph-from {
+  opacity: 0;
+  transition-duration: 180ms;
+}
+
+/* "To" layer — detail-card content. Width is locked via inline style so
+   layout is natural during measurement, even while morph is cell-sized. */
+.country-morph-to {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-family: "DM Sans", system-ui, sans-serif;
+  color: #111;
+  opacity: 0;
+  transition: opacity 320ms ease;
+}
+.country-morph.expanded .country-morph-to {
+  opacity: 1;
+  transition: opacity 280ms ease;
+  transition-delay: 640ms;
+}
+
+.country-morph-to .cm-static-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 0;
+}
+.country-morph-to .cm-back-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  color: #111;
+}
+.country-morph-to .cm-flag {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.country-morph-to .cm-info {
+  padding: 18px 24px 0;
+}
+.country-morph-to .cm-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #6b6b66;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.country-morph-to .cm-name {
+  font-size: 48px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  margin: 0;
+  text-transform: uppercase;
+  color: #111;
+}
+.country-morph-to .cm-sub {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+.country-morph-to .cm-group-tag {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b6b66;
+}
+.country-morph-to .cm-group-tag b { color: #111; font-weight: 700; }
+.country-morph-to .cm-pct {
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #111;
+  display: inline-flex;
+  align-items: baseline;
+}
+.country-morph-to .cm-pct .sign {
+  font-size: 22px;
+  font-weight: 700;
+  color: #6b6b66;
+}
+.country-morph-to .cm-progress {
+  height: 8px;
+  background: #E0E0DC;
+  border-radius: 999px;
+  margin-top: 12px;
+  overflow: hidden;
+}
+.country-morph-to .cm-progress .fill {
+  height: 100%;
+  background: #D4F455;
+  border-radius: 999px;
+}
+.country-morph-to .cm-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #D4F455;
+  color: #111;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border-radius: 999px;
+  margin-top: 16px;
+  align-self: flex-start;
+  width: fit-content;
+}
+
+.country-morph-to .cm-sticker-grid {
+  padding: 28px 24px 24px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px 10px;
+}
+.country-morph-to .cm-sticker {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 1.5px solid #E0E0DC;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 17px;
+  color: #6b6b66;
+}
+.country-morph-to .cm-sticker.owned {
+  background: #111;
+  color: #fff;
+  border-color: #111;
+}
+.country-morph-to .cm-sticker.owned.accent {
+  background: #D4F455;
+  color: #111;
+  border-color: #D4F455;
+}
+
+/* ===== Reverse morph: detail card → country square (back button) =====
+   Phase classes are added/removed by React:
+     phase=init   → .country-morph-to.on (content visible at full size)
+     phase=fading → .on removed (to-content fades out quickly)
+     phase=shrink → morph element resizes to cellStyle, .country-morph-from.on
+                    (square content fades in late in the shrink). */
+
+.country-morph.reverse .country-morph-to,
+.country-morph.reverse .country-morph-to.on {
+  transition: opacity 180ms ease;
+}
+.country-morph.reverse .country-morph-to       { opacity: 0; }
+.country-morph.reverse .country-morph-to.on    { opacity: 1; }
+
+.country-morph.reverse .country-morph-from,
+.country-morph.reverse .country-morph-from.on {
+  transition: opacity 280ms ease 220ms;
+}
+.country-morph.reverse .country-morph-from     { opacity: 0; }
+.country-morph.reverse .country-morph-from.on  { opacity: 1; }
+
+/* ===== Detail-screen exit ("Ver Todos" footer): slide down + fade out ===== */
+.detail-screen.detail-exiting {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  animation: detailSlideDownFade 380ms cubic-bezier(0.32, 0.72, 0.24, 1) forwards;
+  pointer-events: none;
+}
+@keyframes detailSlideDownFade {
+  0%   { transform: translateY(0);    opacity: 1; }
+  22%  { transform: translateY(16px); opacity: 1; }
+  100% { transform: translateY(34px); opacity: 0; }
+}
+
+/* ===== AllCountries exit (back button): slide down + fade out =====
+   The list-screen detaches (position:absolute top:0) so the HomeScreen
+   overlay rendered behind sits at the visible viewport top. The user may
+   have scrolled the list — the handler captures shell.scrollTop into
+   --exit-sy and resets scroll to 0, so we translate the absolute screen
+   back into the user's original visual position before the slide-down. */
+.list-screen.list-exiting {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  --exit-sy: 0px;
+  animation: listSlideDownFade 420ms cubic-bezier(0.32, 0.72, 0.24, 1) forwards;
+  pointer-events: none;
+  overflow: hidden;
+}
+@keyframes listSlideDownFade {
+  0%   { transform: translateY(calc(0px  - var(--exit-sy))); opacity: 1; }
+  25%  { transform: translateY(calc(18px - var(--exit-sy))); opacity: 1; }
+  100% { transform: translateY(calc(40px - var(--exit-sy))); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .list-screen.list-exiting { animation: none; opacity: 0; }
+}
+
+/* ===== AllCountries view-mode toggle: directional slide + fade ===== */
+/* Switching TO A–Z (right button): content enters from the left and slides
+   rightward into place. Switching TO "Group" (left button): enters from the
+   right and slides leftward into place. */
+.groups-wrap {
+  will-change: transform, opacity;
+}
+.groups-enter-az {
+  animation: groupsEnterAz 320ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+.groups-enter-group {
+  animation: groupsEnterGroup 320ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+@keyframes groupsEnterAz {
+  from { transform: translateX(-28px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+@keyframes groupsEnterGroup {
+  from { transform: translateX(28px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .groups-enter-az, .groups-enter-group { animation: none; }
 }

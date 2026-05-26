@@ -63,7 +63,7 @@ function HomeScreen({ owned, totalOwned, total, countries, onSeeAll, onLogout, u
   }, []); // eslint-disable-line
 
   return (
-    <div className="home screen-enter">
+    <div className="home">
       <div className="home-bg" />
       <div className="home-video" aria-hidden>
         <video src="uploads/Fixes___remove_the_music__th.mp4" autoPlay loop muted playsInline />
@@ -123,25 +123,20 @@ function HomeScreen({ owned, totalOwned, total, countries, onSeeAll, onLogout, u
 }
 
 // ---------- ALL COUNTRIES ----------
-function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelectCountry, lastSeen }) {
+function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelectCountry, lastSeen, exiting, exitOffsetY }) {
   const [query, setQuery] = useState("");
   const [mode, setMode] = useState("group"); // "group" | "az"
 
-  const pct = total ? Math.round((totalOwned / total) * 100) : 0;
+  // Toggle animation: only animate after the user actually changes mode,
+  // not on the first render (which collides with the morph entrance).
+  const modeAnimRef = useRef(null);
+  const prevModeRef = useRef(mode);
+  if (prevModeRef.current !== mode) {
+    modeAnimRef.current = mode;
+    prevModeRef.current = mode;
+  }
 
-  // Animate counter + percentage when user returns with changed values
-  const ownedRef = useRef(null);
-  const pctRef = useRef(null);
-  useEffect(() => {
-    const from = lastSeen.totalOwned == null ? totalOwned : lastSeen.totalOwned;
-    flowAnimate(ownedRef.current, from, totalOwned);
-    lastSeen.totalOwned = totalOwned;
-  }, []); // eslint-disable-line
-  useEffect(() => {
-    const from = lastSeen.pct == null ? pct : lastSeen.pct;
-    flowAnimate(pctRef.current, from, pct);
-    lastSeen.pct = pct;
-  }, []); // eslint-disable-line
+  const pct = total ? Math.round((totalOwned / total) * 100) : 0;
 
   const filteredGroups = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -164,7 +159,10 @@ function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelect
   const nothing = filteredGroups.length === 0 || filteredGroups.every(g => g.countries.length === 0);
 
   return (
-    <div className="list-screen screen-enter">
+    <div
+      className={"list-screen" + (exiting ? " list-exiting" : "")}
+      style={exiting ? { "--exit-sy": (exitOffsetY || 0) + "px" } : undefined}
+    >
       <div className="list-sticky">
       <div className="list-header">
         <div className="list-header-top">
@@ -175,10 +173,10 @@ function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelect
         <h1 className="list-title">Todos os Países</h1>
         <div className="list-counter">
           <span className="big">
-            <number-flow ref={ownedRef} /> / {total}
+            {totalOwned} / {total}
           </span>
           <span className="sep" />
-          <span className="pct"><number-flow ref={pctRef} />%</span>
+          <span className="pct">{pct}%</span>
         </div>
       </div>
 
@@ -218,6 +216,7 @@ function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelect
 
       {nothing && <div className="empty">Nenhum país encontrado.</div>}
 
+      <div key={modeAnimRef.current || "init"} className={"groups-wrap" + (modeAnimRef.current ? " groups-enter-" + modeAnimRef.current : "")}>
       {filteredGroups.map(group => {
         // group status (complete if all countries 100%)
         const allP = group.countries.map(c => countryProgress(c, owned));
@@ -248,7 +247,8 @@ function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelect
                   <button
                     key={c.code}
                     className="country-cell"
-                    onClick={() => onSelectCountry(c.code)}
+                    data-country-code={c.code}
+                    onClick={(e) => onSelectCountry(c.code, e.currentTarget.getBoundingClientRect())}
                   >
                     <div className={"country-circle" + (isComplete ? " complete" : isZero ? " zero" : "")}>
                       <span className="flag-bg">{c.flag}</span>
@@ -264,6 +264,7 @@ function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelect
           </div>
         );
       })}
+      </div>
 
       <div style={{ height: 32 }} />
     </div>
@@ -327,7 +328,7 @@ function CountryPane({ code, allCountries, groups, owned, onToggle, numberFlowRe
   );
 }
 
-function CountryDetailScreen({ countryCode, owned, setOwned, allCountries, groups, onBack, onSelectCountry, onSeeAll }) {
+function CountryDetailScreen({ countryCode, owned, setOwned, allCountries, groups, onBack, onSelectCountry, onSeeAll, exiting }) {
   const idx = allCountries.findIndex(c => c.code === countryCode);
   const country = allCountries[idx];
   const prev = idx > 0 ? allCountries[idx - 1] : null;
@@ -370,7 +371,7 @@ function CountryDetailScreen({ countryCode, owned, setOwned, allCountries, group
   };
 
   return (
-    <div className="detail-screen screen-enter">
+    <div className={"detail-screen" + (exiting ? " detail-exiting" : "")}>
       <div className="detail-card">
         <div className="detail-static-row">
           <button className="back-btn" onClick={onBack} aria-label="Voltar">

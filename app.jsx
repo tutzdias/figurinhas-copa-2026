@@ -166,6 +166,184 @@ function App() {
   const lastSeenHome = useRef({ totalOwned: null, pct: null });
   const lastSeenAll = useRef({ totalOwned: null, pct: null });
 
+  // ---- Shared-element transition (Home CTA → All Countries header) ----
+  const [morph, setMorph] = useState(null);
+
+  // ---- Shared-element transition (Country square → Country detail card) ----
+  const [countryMorph, setCountryMorph] = useState(null);
+
+  // ---- Reverse morph (back button: detail card → country square) ----
+  const [reverseMorph, setReverseMorph] = useState(null);
+
+  // ---- Detail-screen exit ("Ver Todos" footer button: slide-down + fade) ----
+  const [detailExiting, setDetailExiting] = useState(false);
+
+  // ---- AllCountries-screen exit (back button: slide-down + fade) ----
+  const [allExiting, setAllExiting] = useState(false);
+  const [allExitOffsetY, setAllExitOffsetY] = useState(0);
+
+  const handleBackFromAll = () => {
+    if (allExiting) return;
+    const shell = document.querySelector(".app-shell");
+    const sy = shell ? shell.scrollTop : 0;
+    setAllExitOffsetY(sy);
+    // Reset scroll so the HomeScreen overlay (rendered in flow behind) is
+    // positioned at the visible viewport top. The list-screen, while exiting,
+    // is position:absolute top:0 and uses --exit-sy to translate back into the
+    // user's original visual position before the slide-down begins.
+    if (shell) shell.scrollTop = 0;
+    setAllExiting(true);
+    window.setTimeout(() => {
+      setRoute("home");
+      setAllExiting(false);
+      setAllExitOffsetY(0);
+    }, 420);
+  };
+
+  const handleSelectCountryAnimated = (code, rect) => {
+    if (countryMorph) return;
+    const shell = document.querySelector(".app-shell");
+    if (!shell || !rect) {
+      setRoute("country:" + code);
+      return;
+    }
+    const s = shell.getBoundingClientRect();
+    const from = {
+      x: rect.left - s.left,
+      y: rect.top - s.top,
+      w: rect.width,
+      h: rect.height,
+    };
+    const cell = document.querySelector(`[data-country-code="${code}"]`);
+    if (cell) cell.style.visibility = "hidden";
+
+    setCountryMorph({ from, code, shellWidth: s.width, phase: "init" });
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setCountryMorph((m) => m && { ...m, phase: "expand" });
+      });
+    });
+    window.setTimeout(() => {
+      setRoute("country:" + code);
+      // Let the detail screen mount, then drop the overlay.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setCountryMorph(null);
+          if (cell) cell.style.visibility = "";
+        });
+      });
+    }, 960);
+  };
+
+  // Back button on detail screen: reverse-morph the card back to the cell.
+  const handleBackFromCountry = () => {
+    if (reverseMorph || detailExiting) return;
+    const code = route.startsWith("country:") ? route.slice("country:".length) : null;
+    if (!code) { setRoute("all"); return; }
+    const shell = document.querySelector(".app-shell");
+    const card = document.querySelector(".detail-card");
+    if (!shell || !card) { setRoute("all"); return; }
+    const s = shell.getBoundingClientRect();
+    const c = card.getBoundingClientRect();
+    const cardRect = {
+      x: c.left - s.left,
+      y: c.top - s.top,
+      w: c.width,
+      h: c.height,
+    };
+
+    setReverseMorph({
+      code,
+      cardRect,
+      shellWidth: s.width,
+      cellRect: null,
+      phase: "init", // morph visible at card size, content visible
+    });
+    // Mount AllCountries behind the overlay so we can measure the cell rect.
+    setRoute("all");
+
+    // After AllCountries renders, find the destination cell.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const shell2 = document.querySelector(".app-shell");
+        const cell = document.querySelector(`[data-country-code="${code}"]`);
+        if (!shell2 || !cell) {
+          // No target rect — just drop the overlay.
+          setReverseMorph(null);
+          return;
+        }
+        const s2 = shell2.getBoundingClientRect();
+        const r = cell.getBoundingClientRect();
+        const cellRect = {
+          x: r.left - s2.left,
+          y: r.top - s2.top,
+          w: r.width,
+          h: r.height,
+        };
+        cell.style.visibility = "hidden";
+        setReverseMorph((m) => m && { ...m, cellRect, phase: "fading" });
+
+        // After content fades out, start the shrink.
+        window.setTimeout(() => {
+          setReverseMorph((m) => m && { ...m, phase: "shrink" });
+        }, 180);
+
+        // After shrink completes, drop the overlay and reveal the cell.
+        window.setTimeout(() => {
+          setReverseMorph(null);
+          if (cell) cell.style.visibility = "";
+        }, 180 + 560 + 60);
+      });
+    });
+  };
+
+  // "Ver Todos" on detail screen: slide the detail-screen down + fade out.
+  const handleSeeAllFromCountry = () => {
+    if (detailExiting || reverseMorph) return;
+    setDetailExiting(true);
+    window.setTimeout(() => {
+      setRoute("all");
+      setDetailExiting(false);
+    }, 380);
+  };
+
+  const handleSeeAllAnimated = () => {
+    if (morph) return; // already animating
+    const shell = document.querySelector(".app-shell");
+    const btn = document.querySelector(".home2-cta");
+    if (!shell || !btn) { setRoute("all"); return; }
+    const s = shell.getBoundingClientRect();
+    const b = btn.getBoundingClientRect();
+    const from = {
+      x: b.left - s.left,
+      y: b.top - s.top,
+      w: b.width,
+      h: b.height,
+    };
+    // Hide the real CTA so the morph element appears to be it.
+    btn.style.visibility = "hidden";
+
+    setMorph({ from, phase: "init" });
+    // Two rAFs so the initial styles are committed before transitioning.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setMorph((m) => m && { ...m, phase: "expand" });
+      });
+    });
+    // After morph completes, swap route. The real header is laid out
+    // exactly where the morph element rests, so removing the overlay is seamless.
+    window.setTimeout(() => {
+      setRoute("all");
+      // One more frame for the route screen to mount, then drop the overlay.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setMorph(null);
+          if (btn) btn.style.visibility = "";
+        });
+      });
+    }, 560);
+  };
+
   // ---- Render gates ----
   if (!authReady) {
     return <div className="app-shell"><LoadingScreen message="Iniciando…" /></div>;
@@ -187,7 +365,7 @@ function App() {
         totalOwned={totalOwned}
         total={total}
         countries={countries}
-        onSeeAll={() => setRoute("all")}
+        onSeeAll={handleSeeAllAnimated}
         onLogout={handleLogout}
         userEmail={session.user.email}
         lastSeen={lastSeenHome.current}
@@ -200,9 +378,11 @@ function App() {
         totalOwned={totalOwned}
         total={total}
         groups={groups}
-        onBack={() => setRoute("home")}
-        onSelectCountry={(code) => setRoute("country:" + code)}
+        onBack={handleBackFromAll}
+        onSelectCountry={handleSelectCountryAnimated}
         lastSeen={lastSeenAll.current}
+        exiting={allExiting}
+        exitOffsetY={allExitOffsetY}
       />
     );
   } else if (route.startsWith("country:")) {
@@ -214,17 +394,360 @@ function App() {
         setOwned={setOwnedShim}
         allCountries={countries}
         groups={groups}
-        onBack={() => setRoute("all")}
+        onBack={handleBackFromCountry}
         onSelectCountry={(c) => setRoute("country:" + c)}
-        onSeeAll={() => setRoute("all")}
+        onSeeAll={handleSeeAllFromCountry}
+        exiting={detailExiting}
       />
     );
   }
 
+  // During detail-screen exit ("Ver Todos"), render AllCountries behind so
+  // it fades through into view as the detail screen slides down + fades.
+  const exitOverlay =
+    detailExiting && route.startsWith("country:") ? (
+      <AllCountriesScreen
+        owned={owned}
+        totalOwned={totalOwned}
+        total={total}
+        groups={groups}
+        onBack={handleBackFromAll}
+        onSelectCountry={handleSelectCountryAnimated}
+        lastSeen={lastSeenAll.current}
+      />
+    ) : allExiting && route === "all" ? (
+      // During AllCountries back-exit, render Home behind so it fades through
+      // into view as the list slides down + fades.
+      <HomeScreen
+        owned={owned}
+        totalOwned={totalOwned}
+        total={total}
+        countries={countries}
+        onSeeAll={handleSeeAllAnimated}
+        onLogout={handleLogout}
+        userEmail={session.user.email}
+        lastSeen={lastSeenHome.current}
+      />
+    ) : null;
+
   return (
     <div className="app-shell">
+      {exitOverlay}
       {screen}
+      {morph && (
+        <SharedHeaderMorph
+          morph={morph}
+          totalOwned={totalOwned}
+          total={total}
+        />
+      )}
+      {countryMorph && (
+        <SharedCountryMorph
+          morph={countryMorph}
+          allCountries={countries}
+          groups={groups}
+          owned={owned}
+        />
+      )}
+      {reverseMorph && (
+        <SharedCountryReverseMorph
+          morph={reverseMorph}
+          allCountries={countries}
+          groups={groups}
+          owned={owned}
+        />
+      )}
       <ErrorBanner message={errorMsg} onDismiss={() => setErrorMsg("")} />
+    </div>
+  );
+}
+
+/* Shared-element morph: Home CTA pill → All-Countries dark header.
+   Renders inside .app-shell (which is position:relative), animates from
+   the captured button rect to a header-shaped block at the top. */
+function SharedHeaderMorph({ morph, totalOwned, total }) {
+  const { from, phase } = morph;
+  const pct = total ? Math.round((totalOwned / total) * 100) : 0;
+  const expanded = phase !== "init";
+
+  const fromStyle = {
+    top: from.y + "px",
+    left: from.x + "px",
+    width: from.w + "px",
+    height: from.h + "px",
+    borderRadius: "999px",
+    background: "#FFFFFF",
+    boxShadow: "0 6px 24px rgba(0, 0, 0, 0.08)",
+  };
+  const toStyle = {
+    top: "0px",
+    left: "0px",
+    width: "100%",
+    height: "212px",
+    borderRadius: "0 0 24px 24px",
+    background: "#1A1A1A",
+    boxShadow: "0 0 0 rgba(0,0,0,0)",
+  };
+
+  return (
+    <div className="shared-morph-root">
+      <div
+        className={"shared-morph" + (expanded ? " expanded" : "")}
+        style={expanded ? toStyle : fromStyle}
+      >
+        <div className="shared-morph-from">
+          <span className="t">Ver Todos os Países</span>
+          <span className="arr">
+            <window.ArrowRightIcon />
+          </span>
+        </div>
+        <div className="shared-morph-to">
+          <div className="shared-morph-to-top">
+            <span className="back">
+              <window.BackIcon />
+            </span>
+          </div>
+          <h1>Todos os Países</h1>
+          <div className="counter">
+            <span className="big">{totalOwned} / {total}</span>
+            <i></i>
+            <span className="pct">{pct}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* Shared-element morph: AllCountries country square → CountryDetail card.
+   Starts at the captured cell rect (rounded square with flag bg + pct),
+   expands to fill the destination as a light-gray rounded card with the
+   FULL detail-card content (header + sticker grid). The destination
+   height is measured at runtime so it matches the real card exactly. */
+function SharedCountryMorph({ morph, allCountries, groups, owned }) {
+  const { from, code, shellWidth, phase } = morph;
+  const expanded = phase !== "init";
+
+  const toContentRef = useRef(null);
+  const [destHeight, setDestHeight] = useState(null);
+
+  React.useLayoutEffect(() => {
+    if (toContentRef.current) {
+      setDestHeight(toContentRef.current.offsetHeight);
+    }
+  }, []);
+
+  const country = allCountries.find((c) => c.code === code);
+  if (!country) return null;
+  const p = window.countryProgress(country, owned);
+  const pct = Math.round(p.pct * 100);
+  const isComplete = pct === 100;
+  const isZero = p.owned === 0;
+  const groupOf = groups.find((g) => g.countries.some((c) => c.code === code));
+  const groupLabel =
+    groupOf.id === "ESP" ? "Grupo Especial" : `Grupo ${groupOf.label}`;
+
+  const fromStyle = {
+    top: from.y + "px",
+    left: from.x + "px",
+    width: from.w + "px",
+    height: from.h + "px",
+    borderRadius: "18px",
+    background: isComplete ? "#D4F455" : isZero ? "#ededea" : "#FFFFFF",
+    boxShadow: isComplete
+      ? "0 4px 14px rgba(212,244,85,0.45)"
+      : "0 2px 12px rgba(0,0,0,0.06)",
+  };
+  const toStyle = {
+    top: "0px",
+    left: "0px",
+    width: "100%",
+    height: (destHeight || 600) + "px",
+    borderRadius: "0 0 28px 28px",
+    background: "#F2F2F0",
+    boxShadow: "0 12px 24px rgba(0,0,0,0.18)",
+  };
+
+  return (
+    <div className="country-morph-root">
+      <div className={"country-morph-backdrop" + (expanded ? " on" : "")} />
+      <div
+        className={"country-morph" + (expanded ? " expanded" : "")}
+        style={expanded ? toStyle : fromStyle}
+      >
+        {/* FROM state — the country square content */}
+        <div
+          className={
+            "country-morph-from" +
+            (isComplete ? " complete" : isZero ? " zero" : "")
+          }
+        >
+          <span className="flag-bg">{country.flag}</span>
+          <span className="pct-fg">{isComplete ? "✓" : `${pct}%`}</span>
+        </div>
+
+        {/* TO state — the FULL detail-card content. Width is locked to the
+            shell width so layout (and thus measured height) is correct even
+            while the morph element is still shaped as a tiny cell. */}
+        <div
+          ref={toContentRef}
+          className="country-morph-to"
+          style={{ width: shellWidth + "px" }}
+        >
+          <div className="cm-static-row">
+            <span className="cm-back-btn">
+              <window.BackIcon />
+            </span>
+            <span className="cm-flag">{country.flag}</span>
+          </div>
+          <div className="cm-info">
+            <div className="cm-eyebrow">{groupLabel} · {country.code}</div>
+            <h1 className="cm-name">{country.name}</h1>
+            <div className="cm-sub">
+              <span className="cm-group-tag">
+                <b>{p.owned}</b> de {p.total} figurinhas
+              </span>
+              <span className={"cm-pct" + (isComplete ? " full" : "")}>
+                {pct}
+                <span className="sign">%</span>
+              </span>
+            </div>
+            <div className="cm-progress"><div className="fill" style={{ width: `${pct}%` }} /></div>
+            {isComplete && <div className="cm-badge">✓ Completo</div>}
+          </div>
+          <div className="cm-sticker-grid">
+            {Array.from({ length: country.count }).map((_, i) => {
+              const n = (country.startAt ?? 1) + i;
+              const isOwned = !!owned[country.code + n];
+              return (
+                <span
+                  key={n}
+                  className={
+                    "cm-sticker" +
+                    (isOwned ? " owned" + (isComplete ? " accent" : "") : "")
+                  }
+                >
+                  {n}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* Reverse-morph: detail card → country square (back button).
+   Phase machine driven from App:
+     init   — overlay covers the card at its current position, content visible.
+     fading — content fades out (~180ms). Card shape unchanged.
+     shrink — card morphs back to the cell rect, country-square content fades in.
+*/
+function SharedCountryReverseMorph({ morph, allCountries, groups, owned }) {
+  const { code, cardRect, cellRect, shellWidth, phase } = morph;
+
+  const country = allCountries.find((c) => c.code === code);
+  if (!country) return null;
+  const p = window.countryProgress(country, owned);
+  const pct = Math.round(p.pct * 100);
+  const isComplete = pct === 100;
+  const isZero = p.owned === 0;
+  const groupOf = groups.find((g) => g.countries.some((c) => c.code === code));
+  const groupLabel =
+    groupOf.id === "ESP" ? "Grupo Especial" : `Grupo ${groupOf.label}`;
+
+  // Card-shape style (init + fading): matches the original detail-card.
+  const cardStyle = {
+    top: cardRect.y + "px",
+    left: cardRect.x + "px",
+    width: cardRect.w + "px",
+    height: cardRect.h + "px",
+    borderRadius: "0 0 28px 28px",
+    background: "#F2F2F0",
+    boxShadow: "0 12px 24px rgba(0,0,0,0.18)",
+  };
+  const cellStyle = cellRect
+    ? {
+        top: cellRect.y + "px",
+        left: cellRect.x + "px",
+        width: cellRect.w + "px",
+        height: cellRect.h + "px",
+        borderRadius: "18px",
+        background: isComplete ? "#D4F455" : isZero ? "#ededea" : "#FFFFFF",
+        boxShadow: isComplete
+          ? "0 4px 14px rgba(212,244,85,0.45)"
+          : "0 2px 12px rgba(0,0,0,0.06)",
+      }
+    : cardStyle;
+
+  const morphStyle = phase === "shrink" ? cellStyle : cardStyle;
+  const toVisible = phase === "init";
+  const fromVisible = phase === "shrink";
+
+  return (
+    <div className="country-morph-root">
+      <div
+        className={
+          "country-morph-backdrop" + (phase !== "shrink" ? " on" : "")
+        }
+      />
+      <div className="country-morph reverse" style={morphStyle}>
+        <div
+          className={
+            "country-morph-from" +
+            (isComplete ? " complete" : isZero ? " zero" : "") +
+            (fromVisible ? " on" : "")
+          }
+        >
+          <span className="flag-bg">{country.flag}</span>
+          <span className="pct-fg">{isComplete ? "✓" : `${pct}%`}</span>
+        </div>
+
+        <div
+          className={"country-morph-to" + (toVisible ? " on" : "")}
+          style={{ width: shellWidth + "px" }}
+        >
+          <div className="cm-static-row">
+            <span className="cm-back-btn">
+              <window.BackIcon />
+            </span>
+            <span className="cm-flag">{country.flag}</span>
+          </div>
+          <div className="cm-info">
+            <div className="cm-eyebrow">{groupLabel} · {country.code}</div>
+            <h1 className="cm-name">{country.name}</h1>
+            <div className="cm-sub">
+              <span className="cm-group-tag">
+                <b>{p.owned}</b> de {p.total} figurinhas
+              </span>
+              <span className={"cm-pct" + (isComplete ? " full" : "")}>
+                {pct}
+                <span className="sign">%</span>
+              </span>
+            </div>
+            <div className="cm-progress"><div className="fill" style={{ width: `${pct}%` }} /></div>
+            {isComplete && <div className="cm-badge">✓ Completo</div>}
+          </div>
+          <div className="cm-sticker-grid">
+            {Array.from({ length: country.count }).map((_, i) => {
+              const n = (country.startAt ?? 1) + i;
+              const isOwned = !!owned[country.code + n];
+              return (
+                <span
+                  key={n}
+                  className={
+                    "cm-sticker" +
+                    (isOwned ? " owned" + (isComplete ? " accent" : "") : "")
+                  }
+                >
+                  {n}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
