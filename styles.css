@@ -640,12 +640,13 @@ input {
   display: none;
 }
 .country-circle.complete .pct-fg {
-  font-size: 24px;
-  font-weight: 800;
+  font-size: 36px;
+  font-weight: 400;
   color: #111;
   background: transparent;
   width: auto; height: auto;
   text-shadow: none;
+  line-height: 1;
 }
 
 .country-label {

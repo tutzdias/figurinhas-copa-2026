@@ -253,7 +253,7 @@ function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelect
                     <div className={"country-circle" + (isComplete ? " complete" : isZero ? " zero" : "")}>
                       <span className="flag-bg">{c.flag}</span>
                       <span className="pct-fg">
-                        {isComplete ? "✓" : `${pPct}%`}
+                        {isComplete ? c.flag : `${pPct}%`}
                       </span>
                     </div>
                     <span className="country-label">{c.code}</span>
