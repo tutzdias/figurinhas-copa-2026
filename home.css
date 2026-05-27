@@ -417,6 +417,10 @@
   color: #111;
   opacity: 0;
   transition: opacity 160ms ease;
+  /* Match .detail-card's bottom padding so the measured destination height
+     equals the real card's height — otherwise the card visibly grows
+     ~44px when the route swaps. */
+  padding-bottom: 32px;
 }
 .country-morph.expanded .country-morph-to {
   opacity: 1;
@@ -494,6 +498,9 @@
 .country-morph-to .cm-progress {
   height: 8px;
   background: #E0E0DC;
+  /* Match .progress-bar margin-top so the cloned content has the same
+     vertical rhythm as the real detail-card. */
+  margin-top: 12px;
   border-radius: 999px;
   margin-top: 12px;
   overflow: hidden;
