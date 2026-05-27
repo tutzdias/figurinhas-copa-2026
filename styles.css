@@ -640,13 +640,23 @@ input {
   display: none;
 }
 .country-circle.complete .pct-fg {
-  font-size: 36px;
+  font-size: 42px;
   font-weight: 400;
   color: #111;
   background: transparent;
   width: auto; height: auto;
   text-shadow: none;
   line-height: 1;
+  /* Force the same emoji font in every browser so Safari and Chrome on
+     iOS render the flag at identical metrics. Without this, the inherited
+     sans-serif stack lets each browser pick its own emoji fallback —
+     iOS Chrome happens to render notably larger than iOS Safari. */
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji",
+               "Twemoji Mozilla", "EmojiOne Color", "Android Emoji", emoji;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  font-feature-settings: normal;
+  font-variant-emoji: emoji;
 }
 
 .country-label {
