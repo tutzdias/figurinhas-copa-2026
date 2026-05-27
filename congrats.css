@@ -1,0 +1,208 @@
+/* ============================================================
+   CongratsScreen — full-screen celebration overlay
+   ============================================================ */
+
+.congrats {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #F2F2F0;
+  overflow: hidden;
+  font-family: "DM Sans", system-ui, sans-serif;
+  color: #1A1A1A;
+  -webkit-tap-highlight-color: transparent;
+  opacity: 1;
+  transition: opacity 280ms ease;
+}
+.congrats.congrats-closing {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Center it within the phone-frame width when the viewport is wider. */
+@media (min-width: 432px) {
+  .congrats {
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    right: auto;
+    width: 100%;
+    max-width: 430px;
+    transform: translateX(-50%);
+    height: 100vh;
+  }
+}
+
+/* ---------- Stage 0/1: centered count-up ---------- */
+
+.congrats-counter {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(160px, 48vw, 240px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: #1A1A1A;
+  z-index: 3;
+  opacity: 1;
+  transition: opacity 320ms ease;
+  pointer-events: none;
+  user-select: none;
+}
+.congrats-stage-2 .congrats-counter,
+.congrats-stage-3 .congrats-counter {
+  opacity: 0;
+  transition-duration: 220ms;
+}
+
+/* ---------- Stage 1/2: green radial blob ---------- */
+/* Pinned to the top-right corner; grows from a soft tendril to fully
+   filling the screen. Uses transform: scale + a large blurred radial
+   gradient so the edges read as organic, not geometric. */
+
+.congrats-blob {
+  position: absolute;
+  top: -60%;
+  right: -60%;
+  width: 220%;
+  height: 220%;
+  background: radial-gradient(
+    circle at 72% 28%,
+    #CEFF6A 0%,
+    #CEFF6A 28%,
+    rgba(206, 255, 106, 0.85) 45%,
+    rgba(206, 255, 106, 0.4) 62%,
+    rgba(206, 255, 106, 0) 78%
+  );
+  transform: scale(0);
+  transform-origin: 72% 28%;
+  filter: blur(8px);
+  z-index: 2;
+  pointer-events: none;
+  transition: transform 1100ms cubic-bezier(0.5, 0, 0.3, 1);
+}
+.congrats-stage-1 .congrats-blob {
+  transform: scale(0.55);
+  transition-duration: 700ms;
+}
+.congrats-stage-2 .congrats-blob,
+.congrats-stage-3 .congrats-blob {
+  transform: scale(1.35);
+  transition-duration: 700ms;
+}
+
+/* Solid green wash fades in beneath the blob once it's filled the screen,
+   so the final background is uniform lime instead of a gradient hint. */
+.congrats::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #CEFF6A;
+  opacity: 0;
+  z-index: 1;
+  transition: opacity 320ms ease;
+  transition-delay: 0ms;
+}
+.congrats-stage-2::before,
+.congrats-stage-3::before {
+  opacity: 1;
+  transition-delay: 250ms;
+}
+
+/* ---------- Stage 3: text reveal ---------- */
+
+.congrats-reveal {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 38%;
+  transform: translateY(-30%);
+  padding: 0 28px;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  pointer-events: none;
+}
+.congrats-line {
+  opacity: 0;
+  transform: translateX(-44px);
+  transition:
+    opacity 520ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    transform 520ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  color: #1A1A1A;
+  text-align: left;
+}
+.congrats-line-num {
+  font-size: clamp(80px, 22vw, 110px);
+  margin-bottom: 6px;
+}
+.congrats-line-label {
+  font-size: clamp(56px, 16vw, 80px);
+  line-height: 1;
+}
+.congrats-line-flags {
+  margin-top: 28px;
+  font-size: clamp(28px, 7vw, 36px);
+  letter-spacing: 0.06em;
+}
+.congrats-stage-3 .congrats-line          { opacity: 1; transform: translateX(0); }
+.congrats-stage-3 .congrats-line-num      { transition-delay:  60ms; }
+.congrats-stage-3 .congrats-line-label    { transition-delay: 200ms; }
+.congrats-stage-3 .congrats-line-flags    { transition-delay: 360ms; }
+
+/* ---------- CTA pill ---------- */
+
+.congrats-cta-wrap {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  z-index: 5;
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity 480ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    transform 480ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  transition-delay: 520ms;
+}
+.congrats-stage-3 .congrats-cta-wrap {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.congrats-cta {
+  width: 100%;
+  background: #FFFFFF;
+  color: #1A1A1A;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: -0.005em;
+  border-radius: 999px;
+  padding: 22px 28px;
+  border: none;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.congrats-cta:active { transform: scale(0.985); }
+.congrats-cta:hover  { background: #FAFAF7; }
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .congrats-blob,
+  .congrats-counter,
+  .congrats::before,
+  .congrats-line,
+  .congrats-cta-wrap {
+    transition: none !important;
+  }
+}

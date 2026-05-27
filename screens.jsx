@@ -233,7 +233,7 @@ function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelect
               {!group.special && allComplete && (
                 <div className="group-status complete">
                   <span className="dot" />
-                  Completo
+                  <span>Completo</span>
                 </div>
               )}
             </div>

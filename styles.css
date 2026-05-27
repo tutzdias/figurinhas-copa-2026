@@ -547,7 +547,8 @@ input {
 .group-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 12px;
   margin-bottom: 16px;
 }
 .group-header .group-label {

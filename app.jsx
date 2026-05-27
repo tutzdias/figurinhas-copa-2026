@@ -171,6 +171,96 @@ function App() {
   // (and so the reverse morph has a visible source).
   const savedAllScrollY = useRef(0);
 
+  // ---- Celebration: detect newly completed countries on entering "all" ----
+  // celebratedRef holds the set of country codes the user has already been
+  // congratulated for. Persisted to localStorage so we don't replay the
+  // celebration after a page reload. A country drops out of the set if its
+  // completion regresses below 100 % (so re-completing celebrates again).
+  const celebratedRef = useRef(null);
+  const [celebration, setCelebration] = useState(null);
+
+  // DEV preview: open the celebration screen with arbitrary args from the
+  // browser console, e.g.  __previewCongrats(2, ["🇺🇾","🇧🇷"])
+  useEffect(() => {
+    window.__previewCongrats = (count = 2, flags = ["🇺🇾", "🇧🇷"]) => {
+      setCelebration({ completedCount: count, countryEmojis: flags });
+    };
+    window.__resetCelebrated = () => {
+      try { localStorage.removeItem("figurinhas:celebrated"); } catch {}
+      celebratedRef.current = null;
+    };
+    return () => {
+      try {
+        delete window.__previewCongrats;
+        delete window.__resetCelebrated;
+      } catch {}
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!countries || !countries.length) return;
+    if (typeof window.countryProgress !== "function") return;
+
+    // Lazy-init celebratedRef from localStorage (once).
+    if (celebratedRef.current === null) {
+      try {
+        const raw = localStorage.getItem("figurinhas:celebrated");
+        celebratedRef.current = raw ? new Set(JSON.parse(raw)) : new Set();
+      } catch {
+        celebratedRef.current = new Set();
+      }
+    }
+
+    // Prune codes that are no longer complete (so re-completing celebrates again).
+    let changed = false;
+    Array.from(celebratedRef.current).forEach((code) => {
+      const c = countries.find((x) => x.code === code);
+      if (!c) return;
+      const p = window.countryProgress(c, owned);
+      if (p.pct !== 1 || p.total === 0) {
+        celebratedRef.current.delete(code);
+        changed = true;
+      }
+    });
+    if (changed) {
+      try {
+        localStorage.setItem(
+          "figurinhas:celebrated",
+          JSON.stringify([...celebratedRef.current])
+        );
+      } catch {}
+    }
+
+    // Only fire when arriving at the AllCountries screen.
+    if (route !== "all") return;
+    if (celebration) return; // already showing one
+
+    const newlyComplete = [];
+    countries.forEach((c) => {
+      const p = window.countryProgress(c, owned);
+      if (
+        p.pct === 1 &&
+        p.total > 0 &&
+        !celebratedRef.current.has(c.code)
+      ) {
+        newlyComplete.push(c);
+      }
+    });
+    if (newlyComplete.length === 0) return;
+
+    setCelebration({
+      completedCount: newlyComplete.length,
+      countryEmojis: newlyComplete.map((c) => c.flag),
+    });
+    newlyComplete.forEach((c) => celebratedRef.current.add(c.code));
+    try {
+      localStorage.setItem(
+        "figurinhas:celebrated",
+        JSON.stringify([...celebratedRef.current])
+      );
+    } catch {}
+  }, [route, owned, countries, celebration]);
+
   // ---- Shared-element transition (Country square → Country detail card) ----
   const [countryMorph, setCountryMorph] = useState(null);
 
@@ -440,6 +530,13 @@ function App() {
         />
       )}
       <ErrorBanner message={errorMsg} onDismiss={() => setErrorMsg("")} />
+      {celebration && window.CongratsScreen && (
+        <window.CongratsScreen
+          completedCount={celebration.completedCount}
+          countryEmojis={celebration.countryEmojis}
+          onClose={() => setCelebration(null)}
+        />
+      )}
     </div>
   );
 }
