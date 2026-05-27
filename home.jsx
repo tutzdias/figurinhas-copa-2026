@@ -32,9 +32,6 @@
               <div className="home2-stamp-line">
                 ALBUM 2026 <span className="home2-version-dot">·</span> <span className="home2-version">v1.3.0</span>
               </div>
-              <div className="home2-tagline">
-                Eu sou @tutzdias em qualquer lugar, fale comigo!
-              </div>
             </div>
             <button
               className="home2-logout"

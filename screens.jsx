@@ -123,7 +123,7 @@ function HomeScreen({ owned, totalOwned, total, countries, onSeeAll, onLogout, u
 }
 
 // ---------- ALL COUNTRIES ----------
-function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelectCountry, lastSeen, exiting, exitOffsetY }) {
+function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelectCountry, lastSeen, exiting, exitOffsetY, entering }) {
   const [query, setQuery] = useState("");
   const [mode, setMode] = useState("group"); // "group" | "az"
 
@@ -160,7 +160,7 @@ function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelect
 
   return (
     <div
-      className={"list-screen" + (exiting ? " list-exiting" : "")}
+      className={"list-screen" + (exiting ? " list-exiting" : "") + (entering ? " list-entering" : "")}
       style={exiting ? { "--exit-sy": (exitOffsetY || 0) + "px" } : undefined}
     >
       <div className="list-sticky">

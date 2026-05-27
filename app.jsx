@@ -166,8 +166,10 @@ function App() {
   const lastSeenHome = useRef({ totalOwned: null, pct: null });
   const lastSeenAll = useRef({ totalOwned: null, pct: null });
 
-  // ---- Shared-element transition (Home CTA → All Countries header) ----
-  const [morph, setMorph] = useState(null);
+  // Scroll position of .app-shell when leaving AllCountries → CountryDetail,
+  // restored on back-nav so the cell reappears at the position the user remembers
+  // (and so the reverse morph has a visible source).
+  const savedAllScrollY = useRef(0);
 
   // ---- Shared-element transition (Country square → Country detail card) ----
   const [countryMorph, setCountryMorph] = useState(null);
@@ -190,14 +192,14 @@ function App() {
     // Reset scroll so the HomeScreen overlay (rendered in flow behind) is
     // positioned at the visible viewport top. The list-screen, while exiting,
     // is position:absolute top:0 and uses --exit-sy to translate back into the
-    // user's original visual position before the slide-down begins.
+    // user's original visual position before the slide-right begins.
     if (shell) shell.scrollTop = 0;
     setAllExiting(true);
     window.setTimeout(() => {
       setRoute("home");
       setAllExiting(false);
       setAllExitOffsetY(0);
-    }, 420);
+    }, 340);
   };
 
   const handleSelectCountryAnimated = (code, rect) => {
@@ -214,16 +216,23 @@ function App() {
       w: rect.width,
       h: rect.height,
     };
+    const shellRect = { top: s.top, left: s.left, width: s.width, height: s.height };
+    // Save scroll position so we can restore it on back-nav (and so the
+    // route swap can reset scrollTop=0 without losing the user's place).
+    savedAllScrollY.current = shell.scrollTop;
     const cell = document.querySelector(`[data-country-code="${code}"]`);
     if (cell) cell.style.visibility = "hidden";
 
-    setCountryMorph({ from, code, shellWidth: s.width, phase: "init" });
+    setCountryMorph({ from, code, shellWidth: s.width, shellRect, phase: "init" });
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         setCountryMorph((m) => m && { ...m, phase: "expand" });
       });
     });
     window.setTimeout(() => {
+      // Reset shell scroll so the new detail screen lands at the top —
+      // exactly where the morph element finished animating to.
+      shell.scrollTop = 0;
       setRoute("country:" + code);
       // Let the detail screen mount, then drop the overlay.
       requestAnimationFrame(() => {
@@ -232,7 +241,7 @@ function App() {
           if (cell) cell.style.visibility = "";
         });
       });
-    }, 960);
+    }, 480);
   };
 
   // Back button on detail screen: reverse-morph the card back to the cell.
@@ -251,21 +260,25 @@ function App() {
       w: c.width,
       h: c.height,
     };
+    const shellRect = { top: s.top, left: s.left, width: s.width, height: s.height };
 
     setReverseMorph({
       code,
       cardRect,
       shellWidth: s.width,
+      shellRect,
       cellRect: null,
       phase: "init", // morph visible at card size, content visible
     });
     // Mount AllCountries behind the overlay so we can measure the cell rect.
     setRoute("all");
 
-    // After AllCountries renders, find the destination cell.
+    // After AllCountries renders, restore the saved scroll position so the
+    // cell sits where the user remembers — then measure it.
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         const shell2 = document.querySelector(".app-shell");
+        if (shell2) shell2.scrollTop = savedAllScrollY.current || 0;
         const cell = document.querySelector(`[data-country-code="${code}"]`);
         if (!shell2 || !cell) {
           // No target rect — just drop the overlay.
@@ -286,13 +299,13 @@ function App() {
         // After content fades out, start the shrink.
         window.setTimeout(() => {
           setReverseMorph((m) => m && { ...m, phase: "shrink" });
-        }, 180);
+        }, 90);
 
         // After shrink completes, drop the overlay and reveal the cell.
         window.setTimeout(() => {
           setReverseMorph(null);
           if (cell) cell.style.visibility = "";
-        }, 180 + 560 + 60);
+        }, 90 + 280 + 30);
       });
     });
   };
@@ -307,41 +320,14 @@ function App() {
     }, 380);
   };
 
-  const handleSeeAllAnimated = () => {
-    if (morph) return; // already animating
-    const shell = document.querySelector(".app-shell");
-    const btn = document.querySelector(".home2-cta");
-    if (!shell || !btn) { setRoute("all"); return; }
-    const s = shell.getBoundingClientRect();
-    const b = btn.getBoundingClientRect();
-    const from = {
-      x: b.left - s.left,
-      y: b.top - s.top,
-      w: b.width,
-      h: b.height,
-    };
-    // Hide the real CTA so the morph element appears to be it.
-    btn.style.visibility = "hidden";
+  // ---- AllCountries entrance (Home → All): slide in from the right ----
+  const [allEntering, setAllEntering] = useState(false);
 
-    setMorph({ from, phase: "init" });
-    // Two rAFs so the initial styles are committed before transitioning.
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        setMorph((m) => m && { ...m, phase: "expand" });
-      });
-    });
-    // After morph completes, swap route. The real header is laid out
-    // exactly where the morph element rests, so removing the overlay is seamless.
-    window.setTimeout(() => {
-      setRoute("all");
-      // One more frame for the route screen to mount, then drop the overlay.
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setMorph(null);
-          if (btn) btn.style.visibility = "";
-        });
-      });
-    }, 560);
+  const handleSeeAllAnimated = () => {
+    if (allEntering || allExiting) return;
+    setAllEntering(true);
+    setRoute("all");
+    window.setTimeout(() => setAllEntering(false), 340);
   };
 
   // ---- Render gates ----
@@ -383,6 +369,7 @@ function App() {
         lastSeen={lastSeenAll.current}
         exiting={allExiting}
         exitOffsetY={allExitOffsetY}
+        entering={allEntering}
       />
     );
   } else if (route.startsWith("country:")) {
@@ -416,31 +403,26 @@ function App() {
         lastSeen={lastSeenAll.current}
       />
     ) : allExiting && route === "all" ? (
-      // During AllCountries back-exit, render Home behind so it fades through
-      // into view as the list slides down + fades.
-      <HomeScreen
-        owned={owned}
-        totalOwned={totalOwned}
-        total={total}
-        countries={countries}
-        onSeeAll={handleSeeAllAnimated}
-        onLogout={handleLogout}
-        userEmail={session.user.email}
-        lastSeen={lastSeenHome.current}
-      />
+      // During AllCountries back-exit, render Home behind so it slides in
+      // from the left as the list slides off to the right.
+      <div className="list-exit-overlay">
+        <HomeScreen
+          owned={owned}
+          totalOwned={totalOwned}
+          total={total}
+          countries={countries}
+          onSeeAll={handleSeeAllAnimated}
+          onLogout={handleLogout}
+          userEmail={session.user.email}
+          lastSeen={lastSeenHome.current}
+        />
+      </div>
     ) : null;
 
   return (
     <div className="app-shell">
       {exitOverlay}
       {screen}
-      {morph && (
-        <SharedHeaderMorph
-          morph={morph}
-          totalOwned={totalOwned}
-          total={total}
-        />
-      )}
       {countryMorph && (
         <SharedCountryMorph
           morph={countryMorph}
@@ -525,7 +507,7 @@ function SharedHeaderMorph({ morph, totalOwned, total }) {
    FULL detail-card content (header + sticker grid). The destination
    height is measured at runtime so it matches the real card exactly. */
 function SharedCountryMorph({ morph, allCountries, groups, owned }) {
-  const { from, code, shellWidth, phase } = morph;
+  const { from, code, shellWidth, shellRect, phase } = morph;
   const expanded = phase !== "init";
 
   const toContentRef = useRef(null);
@@ -568,8 +550,21 @@ function SharedCountryMorph({ morph, allCountries, groups, owned }) {
     boxShadow: "0 12px 24px rgba(0,0,0,0.18)",
   };
 
+  // Render in viewport-fixed coords matched to the shell's visible rect,
+  // so the morph stays anchored to what the user sees even when the
+  // AllCountries list is scrolled. (.app-shell is the scrolling container —
+  // a position:absolute root would have scrolled offscreen.)
+  const rootStyle = shellRect ? {
+    position: "fixed",
+    top: shellRect.top + "px",
+    left: shellRect.left + "px",
+    width: shellRect.width + "px",
+    height: shellRect.height + "px",
+    inset: "auto",
+  } : undefined;
+
   return (
-    <div className="country-morph-root">
+    <div className="country-morph-root" style={rootStyle}>
       <div className={"country-morph-backdrop" + (expanded ? " on" : "")} />
       <div
         className={"country-morph" + (expanded ? " expanded" : "")}
@@ -645,7 +640,7 @@ function SharedCountryMorph({ morph, allCountries, groups, owned }) {
      shrink — card morphs back to the cell rect, country-square content fades in.
 */
 function SharedCountryReverseMorph({ morph, allCountries, groups, owned }) {
-  const { code, cardRect, cellRect, shellWidth, phase } = morph;
+  const { code, cardRect, cellRect, shellWidth, shellRect, phase } = morph;
 
   const country = allCountries.find((c) => c.code === code);
   if (!country) return null;
@@ -685,8 +680,17 @@ function SharedCountryReverseMorph({ morph, allCountries, groups, owned }) {
   const toVisible = phase === "init";
   const fromVisible = phase === "shrink";
 
+  const rootStyle = shellRect ? {
+    position: "fixed",
+    top: shellRect.top + "px",
+    left: shellRect.left + "px",
+    width: shellRect.width + "px",
+    height: shellRect.height + "px",
+    inset: "auto",
+  } : undefined;
+
   return (
-    <div className="country-morph-root">
+    <div className="country-morph-root" style={rootStyle}>
       <div
         className={
           "country-morph-backdrop" + (phase !== "shrink" ? " on" : "")

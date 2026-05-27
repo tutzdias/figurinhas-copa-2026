@@ -340,7 +340,7 @@
   inset: 0;
   background: #1A1A1A;
   opacity: 0;
-  transition: opacity 540ms cubic-bezier(0.65, 0, 0.35, 1);
+  transition: opacity 270ms cubic-bezier(0.65, 0, 0.35, 1);
 }
 .country-morph-backdrop.on { opacity: 1; }
 
@@ -349,13 +349,13 @@
   overflow: hidden;
   will-change: top, left, width, height, border-radius, background;
   transition:
-    top 620ms cubic-bezier(0.65, 0, 0.35, 1),
-    left 620ms cubic-bezier(0.65, 0, 0.35, 1),
-    width 620ms cubic-bezier(0.65, 0, 0.35, 1),
-    height 620ms cubic-bezier(0.65, 0, 0.35, 1),
-    border-radius 620ms cubic-bezier(0.65, 0, 0.35, 1),
-    background 540ms cubic-bezier(0.65, 0, 0.35, 1) 40ms,
-    box-shadow 620ms ease;
+    top 310ms cubic-bezier(0.65, 0, 0.35, 1),
+    left 310ms cubic-bezier(0.65, 0, 0.35, 1),
+    width 310ms cubic-bezier(0.65, 0, 0.35, 1),
+    height 310ms cubic-bezier(0.65, 0, 0.35, 1),
+    border-radius 310ms cubic-bezier(0.65, 0, 0.35, 1),
+    background 270ms cubic-bezier(0.65, 0, 0.35, 1) 20ms,
+    box-shadow 310ms ease;
 }
 
 /* "From" layer — country-square content */
@@ -365,7 +365,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 220ms ease;
+  transition: opacity 110ms ease;
   opacity: 1;
 }
 .country-morph-from .flag-bg {
@@ -404,7 +404,7 @@
 }
 .country-morph.expanded .country-morph-from {
   opacity: 0;
-  transition-duration: 180ms;
+  transition-duration: 90ms;
 }
 
 /* "To" layer — detail-card content. Width is locked via inline style so
@@ -416,12 +416,12 @@
   font-family: "DM Sans", system-ui, sans-serif;
   color: #111;
   opacity: 0;
-  transition: opacity 320ms ease;
+  transition: opacity 160ms ease;
 }
 .country-morph.expanded .country-morph-to {
   opacity: 1;
-  transition: opacity 280ms ease;
-  transition-delay: 640ms;
+  transition: opacity 140ms ease;
+  transition-delay: 320ms;
 }
 
 .country-morph-to .cm-static-row {
@@ -558,14 +558,14 @@
 
 .country-morph.reverse .country-morph-to,
 .country-morph.reverse .country-morph-to.on {
-  transition: opacity 180ms ease;
+  transition: opacity 90ms ease;
 }
 .country-morph.reverse .country-morph-to       { opacity: 0; }
 .country-morph.reverse .country-morph-to.on    { opacity: 1; }
 
 .country-morph.reverse .country-morph-from,
 .country-morph.reverse .country-morph-from.on {
-  transition: opacity 280ms ease 220ms;
+  transition: opacity 140ms ease 110ms;
 }
 .country-morph.reverse .country-morph-from     { opacity: 0; }
 .country-morph.reverse .country-morph-from.on  { opacity: 1; }
@@ -587,12 +587,22 @@
   100% { transform: translateY(34px); opacity: 0; }
 }
 
-/* ===== AllCountries exit (back button): slide down + fade out =====
+/* ===== AllCountries entrance (Home → All): slide in from the right ===== */
+.list-screen.list-entering {
+  animation: listSlideInFromRight 320ms cubic-bezier(0.32, 0.72, 0.24, 1) both;
+  will-change: transform;
+}
+@keyframes listSlideInFromRight {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0);    }
+}
+
+/* ===== AllCountries exit (back button): slide right (no fade) =====
    The list-screen detaches (position:absolute top:0) so the HomeScreen
    overlay rendered behind sits at the visible viewport top. The user may
    have scrolled the list — the handler captures shell.scrollTop into
    --exit-sy and resets scroll to 0, so we translate the absolute screen
-   back into the user's original visual position before the slide-down. */
+   back into the user's original visual position before the slide. */
 .list-screen.list-exiting {
   position: absolute;
   top: 0;
@@ -601,17 +611,42 @@
   bottom: 0;
   z-index: 50;
   --exit-sy: 0px;
-  animation: listSlideDownFade 420ms cubic-bezier(0.32, 0.72, 0.24, 1) forwards;
+  animation: listSlideOutRight 320ms cubic-bezier(0.32, 0.72, 0.24, 1) forwards;
   pointer-events: none;
   overflow: hidden;
+  will-change: transform;
 }
-@keyframes listSlideDownFade {
-  0%   { transform: translateY(calc(0px  - var(--exit-sy))); opacity: 1; }
-  25%  { transform: translateY(calc(18px - var(--exit-sy))); opacity: 1; }
-  100% { transform: translateY(calc(40px - var(--exit-sy))); opacity: 0; }
+@keyframes listSlideOutRight {
+  from { transform: translate(0,     calc(0px - var(--exit-sy))); }
+  to   { transform: translate(100%,  calc(0px - var(--exit-sy))); }
 }
+
+/* Exit-overlay wrapper for HomeScreen during AllCountries back-nav.
+   Must proxy the flex sizing the .home2 root would normally get from
+   .app-shell, otherwise home2 shrinks to content and the bottom-pinned
+   percentage briefly appears near the top before the layout settles. */
+.list-exit-overlay {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* While AllCountries is exiting rightward, slide Home in from the left.
+   The exitOverlay renders the HomeScreen behind the list (in flow). */
+.list-exit-overlay .home2 {
+  animation: homeSlideInFromLeft 320ms cubic-bezier(0.32, 0.72, 0.24, 1) both;
+  will-change: transform;
+}
+@keyframes homeSlideInFromLeft {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0);     }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .list-screen.list-exiting { animation: none; opacity: 0; }
+  .list-screen.list-exiting,
+  .list-screen.list-entering,
+  .list-exit-overlay .home2 { animation: none; }
 }
 
 /* ===== AllCountries view-mode toggle: directional slide + fade ===== */
