@@ -123,9 +123,9 @@ function HomeScreen({ owned, totalOwned, total, countries, onSeeAll, onLogout, u
 }
 
 // ---------- ALL COUNTRIES ----------
-function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelectCountry, lastSeen, exiting, exitOffsetY, entering }) {
+function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelectCountry, onMark, lastSeen, exiting, exitOffsetY, entering }) {
   const [query, setQuery] = useState("");
-  const [mode, setMode] = useState("group"); // "group" | "az"
+  const [mode, setMode] = useState("group"); // "faltantes" | "group" | "az"
 
   // Toggle animation: only animate after the user actually changes mode,
   // not on the first render (which collides with the morph entrance).
@@ -181,43 +181,44 @@ function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelect
       </div>
 
       <div className="list-controls">
-        <div className="search-wrap">
-          <SearchIcon />
-          <input
-            type="text"
-            placeholder="Buscar país ou sigla…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        </div>
-        <div className="view-toggle" data-mode={mode}>
-          <div className="view-toggle-indicator" aria-hidden />
+        <nav className="seg-nav" data-mode={mode}>
+          <div className="seg-nav-indicator" aria-hidden />
           <button
-            className={"view-toggle-opt" + (mode === "group" ? " active" : "")}
+            className={"seg-nav-opt" + (mode === "faltantes" ? " active" : "")}
+            onClick={() => setMode("faltantes")}
+            aria-pressed={mode === "faltantes"}
+          >
+            <FaltantesIcon active={mode === "faltantes"} />
+            <span>Faltantes</span>
+          </button>
+          <button
+            className={"seg-nav-opt" + (mode === "group" ? " active" : "")}
             onClick={() => setMode("group")}
-            aria-label="Por grupo"
-            title="Por grupo"
             aria-pressed={mode === "group"}
           >
             <GridIcon active={mode === "group"} />
+            <span>Grupos</span>
           </button>
           <button
-            className={"view-toggle-opt" + (mode === "az" ? " active" : "")}
+            className={"seg-nav-opt" + (mode === "az" ? " active" : "")}
             onClick={() => setMode("az")}
-            aria-label="A–Z"
-            title="A–Z"
             aria-pressed={mode === "az"}
           >
             <AzIcon active={mode === "az"} />
+            <span>A–Z</span>
           </button>
-        </div>
+        </nav>
       </div>
       </div>
 
-      {nothing && <div className="empty">Nenhum país encontrado.</div>}
+      {mode === "faltantes" ? (
+        <FaltantesView groups={groups} owned={owned} query={query} onMark={onMark} />
+      ) : (
+        <React.Fragment>
+          {nothing && <div className="empty">Nenhum país encontrado.</div>}
 
-      <div key={modeAnimRef.current || "init"} className={"groups-wrap" + (modeAnimRef.current ? " groups-enter-" + modeAnimRef.current : "")}>
-      {filteredGroups.map(group => {
+          <div key={modeAnimRef.current || "init"} className={"groups-wrap" + (modeAnimRef.current ? " groups-enter-" + modeAnimRef.current : "")}>
+          {filteredGroups.map(group => {
         // group status (complete if all countries 100%)
         const allP = group.countries.map(c => countryProgress(c, owned));
         const allComplete = allP.length > 0 && allP.every(p => p.pct === 1);
@@ -264,14 +265,124 @@ function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelect
           </div>
         );
       })}
-      </div>
+          </div>
+        </React.Fragment>
+      )}
 
       <div style={{ height: 32 }} />
     </div>
   );
 }
 
-// ---------- COUNTRY DETAIL ----------
+// ---------- FALTANTES (missing stickers, all countries open) ----------
+function FaltantesView({ groups, owned, query, onMark }) {
+  // Local lifecycle for stickers the user just marked: keep them visible so
+  // they can animate (fill → fade) before leaving the missing list.
+  //   key -> "mark" (filled) | "fade" (fading out)
+  const [marking, setMarking] = useState({});
+  const timers = useRef({});
+
+  useEffect(() => {
+    return () => {
+      // Clear any pending timers on unmount
+      Object.values(timers.current).forEach((ids) => ids.forEach(clearTimeout));
+    };
+  }, []);
+
+  const handleMark = (key) => {
+    if (marking[key]) return; // already animating out
+    onMark && onMark(key); // optimistic owned update (also refreshes detail)
+    setMarking((m) => ({ ...m, [key]: "mark" }));
+    const t1 = setTimeout(() => {
+      setMarking((m) => (m[key] ? { ...m, [key]: "fade" } : m));
+    }, 480);
+    const t2 = setTimeout(() => {
+      setMarking((m) => {
+        const next = { ...m };
+        delete next[key];
+        return next;
+      });
+      delete timers.current[key];
+    }, 480 + 420);
+    timers.current[key] = [t1, t2];
+  };
+
+  const q = query.trim().toLowerCase();
+
+  // Flatten countries in group order, with their group label for the eyebrow.
+  const countries = [];
+  groups.forEach((g) => {
+    g.countries.forEach((c) => {
+      countries.push({
+        ...c,
+        groupName: g.id === "ESP" ? "Grupo Especial" : `Grupo ${g.label}`,
+      });
+    });
+  });
+
+  const filtered = countries.filter(
+    (c) => !q || c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q)
+  );
+
+  // Build each country's visible (missing or mid-animation) sticker list.
+  const blocks = filtered
+    .map((c) => {
+      const start = c.startAt ?? 1;
+      const missing = [];
+      for (let i = 0; i < c.count; i++) {
+        const n = start + i;
+        const key = c.code + n;
+        const phase = marking[key];
+        if (!owned[key] || phase) missing.push({ n, key, phase });
+      }
+      return { country: c, missing };
+    })
+    .filter((b) => b.missing.length > 0);
+
+  if (blocks.length === 0) {
+    return (
+      <div className="faltantes">
+        <div className="faltantes-done">
+          <div className="faltantes-done-emoji">🎉</div>
+          <div className="faltantes-done-title">Tudo completo!</div>
+          <div className="faltantes-done-sub">
+            {q ? "Nenhum país encontrado." : "Você não tem figurinhas faltando."}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="faltantes">
+      {blocks.map(({ country, missing }) => (
+        <div key={country.code} className="faltantes-country">
+          <div className="faltantes-head">
+            <span className="faltantes-flag">{country.flag}</span>
+            <span className="faltantes-name">{country.name}</span>
+          </div>
+          <div className="faltantes-stickers">
+            {missing.map(({ n, key, phase }) => (
+              <button
+                key={key}
+                className={
+                  "faltante-sticker" +
+                  (phase === "mark" ? " marked" : "") +
+                  (phase === "fade" ? " marked fading" : "")
+                }
+                onClick={() => handleMark(key)}
+                disabled={!!phase}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+      <div style={{ height: 8 }} />
+    </div>
+  );
+}
 function CountryPane({ code, allCountries, groups, owned, onToggle, numberFlowRef, interactive }) {
   const country = allCountries.find(c => c.code === code);
   if (!country) return null;

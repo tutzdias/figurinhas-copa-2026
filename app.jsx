@@ -456,6 +456,7 @@ function App() {
         groups={groups}
         onBack={handleBackFromAll}
         onSelectCountry={handleSelectCountryAnimated}
+        onMark={toggleSticker}
         lastSeen={lastSeenAll.current}
         exiting={allExiting}
         exitOffsetY={allExitOffsetY}

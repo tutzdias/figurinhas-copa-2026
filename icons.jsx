@@ -47,6 +47,15 @@ const AzIcon = ({ active }) => (
   </svg>
 );
 
+const FaltantesIcon = ({ active }) => (
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.4 : 2} strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="7" cy="7" r="3.1" fill="currentColor" stroke="none" />
+    <circle cx="17" cy="7" r="3.1" fill="currentColor" stroke="none" />
+    <circle cx="7" cy="17" r="3.1" fill="currentColor" stroke="none" />
+    <circle cx="17" cy="17" r="3.1" strokeDasharray="2.2 2.2" />
+  </svg>
+);
+
 Object.assign(window, {
-  SearchIcon, BackIcon, ArrowRightIcon, ArrowLeftIcon, ArrowRightLargeIcon, GridIcon, AzIcon,
+  SearchIcon, BackIcon, ArrowRightIcon, ArrowLeftIcon, ArrowRightLargeIcon, GridIcon, AzIcon, FaltantesIcon,
 });
