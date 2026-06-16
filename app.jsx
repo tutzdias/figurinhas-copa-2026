@@ -1,10 +1,36 @@
 /* Main app — auth gating, Supabase persistence, screen routing */
 
 function LoadingScreen({ message }) {
+  const [progress, setProgress] = React.useState(0);
+
+  React.useEffect(() => {
+    // Simulate a realistic load 0→100% over ~4.5s with eased, slightly
+    // irregular increments so it doesn't feel mechanical.
+    let raf;
+    const start = performance.now();
+    const DURATION = 4500;
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / DURATION);
+      // easeInOutCubic for a natural ramp-up and settle
+      const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      setProgress(Math.min(100, Math.round(eased * 100)));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
   return (
-    <div className="loading-screen">
-      <div className="loading-spinner" />
-      <div className="loading-text">{message || "Carregando…"}</div>
+    <div className="carregar">
+      <div className="carregar-mesh" aria-hidden="true">
+        <span className="carregar-blob blob-a" />
+        <span className="carregar-blob blob-b" />
+        <span className="carregar-blob blob-c" />
+      </div>
+
+      <div className="carregar-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label={message || "Carregando"}>
+        <div className="carregar-fill" style={{ width: progress + "%" }} />
+      </div>
     </div>
   );
 }

@@ -127,12 +127,18 @@ function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelect
   const [query, setQuery] = useState("");
   const [mode, setMode] = useState("group"); // "faltantes" | "group" | "az"
 
-  // Toggle animation: only animate after the user actually changes mode,
-  // not on the first render (which collides with the morph entrance).
-  const modeAnimRef = useRef(null);
+  // Directional toggle animation: slide based on the nav order
+  // (Faltantes 0 · Grupos 1 · A–Z 2). Moving right → slide right; moving
+  // left → slide left. Only animates after the user changes mode, not on
+  // first render (which collides with the morph entrance).
+  const MODE_ORDER = { faltantes: 0, group: 1, az: 2 };
+  const modeDirRef = useRef(null);
+  const modeKeyRef = useRef(0);
   const prevModeRef = useRef(mode);
   if (prevModeRef.current !== mode) {
-    modeAnimRef.current = mode;
+    modeDirRef.current =
+      MODE_ORDER[mode] > MODE_ORDER[prevModeRef.current] ? "right" : "left";
+    modeKeyRef.current += 1;
     prevModeRef.current = mode;
   }
 
@@ -217,7 +223,7 @@ function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelect
         <React.Fragment>
           {nothing && <div className="empty">Nenhum país encontrado.</div>}
 
-          <div key={modeAnimRef.current || "init"} className={"groups-wrap" + (modeAnimRef.current ? " groups-enter-" + modeAnimRef.current : "")}>
+          <div key={modeKeyRef.current} className={"groups-wrap" + (modeDirRef.current ? " groups-enter-" + modeDirRef.current : "")}>
           {filteredGroups.map(group => {
         // group status (complete if all countries 100%)
         const allP = group.countries.map(c => countryProgress(c, owned));
@@ -481,9 +487,19 @@ function CountryDetailScreen({ countryCode, owned, setOwned, allCountries, group
     });
   };
 
+  // Entrance: on first open (via morph), show the card + back button, then
+  // stagger the content (flag, info, stickers) in with fade + slide-up.
+  // Only fires once on mount — arrow navigation keeps the component mounted
+  // and uses its own slide transition.
+  const [opening, setOpening] = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => setOpening(false), 1000);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
     <div className={"detail-screen" + (exiting ? " detail-exiting" : "")}>
-      <div className="detail-card">
+      <div className={"detail-card" + (opening ? " detail-opening" : "")}>
         <div className="detail-static-row">
           <button className="back-btn" onClick={onBack} aria-label="Voltar">
             <BackIcon />

@@ -11,12 +11,35 @@
     // on this screen to the current value.
     const countRef = useRef(null);
     const pctRef = useRef(null);
+
+    // Slow the Home count-up so it reads as a deliberate roll-up rather than
+    // a quick snap. number-flow exposes EffectTiming props per layer; bumping
+    // the durations stretches the whole animation. Easing keeps it smooth with
+    // a soft settle at the end.
+    const slowTiming = (el) => {
+      if (!el) return;
+      const ease = "cubic-bezier(0.22, 1, 0.36, 1)";
+      const apply = () => {
+        el.transformTiming = { duration: 2000, easing: ease };
+        el.spinTiming = { duration: 2000, easing: ease };
+        el.opacityTiming = { duration: 900, easing: "ease-out" };
+      };
+      apply();
+      // Re-apply once the custom element has upgraded, in case the pre-upgrade
+      // property assignment was shadowed by the class accessors.
+      if (window.customElements && customElements.whenDefined) {
+        customElements.whenDefined("number-flow").then(apply);
+      }
+    };
+
     useEffect(() => {
+      slowTiming(countRef.current);
       const from = lastSeen.totalOwned == null ? totalOwned : lastSeen.totalOwned;
       window.flowAnimate(countRef.current, from, totalOwned);
       lastSeen.totalOwned = totalOwned;
     }, []); // eslint-disable-line
     useEffect(() => {
+      slowTiming(pctRef.current);
       const from = lastSeen.pct == null ? pct : lastSeen.pct;
       window.flowAnimate(pctRef.current, from, pct);
       lastSeen.pct = pct;
