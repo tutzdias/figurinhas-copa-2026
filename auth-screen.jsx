@@ -50,67 +50,63 @@ function AuthScreen() {
   };
 
   return (
-    <div className="auth-screen screen-enter">
-      <div className="auth-bg" />
-      <div className="auth-trophy" aria-hidden>
-        <div className="home-trophy-glow" />
-        <img src="assets/trophy.webp" alt="" />
+    <form className="auth2 screen-enter" onSubmit={submit} noValidate>
+      <div className="auth2-top">
+        <span>COPA</span>
+        <span>2026</span>
       </div>
+      <div className="auth2-rule" />
 
-      <div className="auth-content">
-        <div className="auth-stamp">COPA<br/>DO MUNDO<br/>2026</div>
-        <h1 className="auth-title">
-          Catalogador<br/>de Figurinhas
-        </h1>
-        <p className="auth-sub">
-          {mode === "signin" ? "Entre para acessar suas figurinhas" : "Crie sua conta para começar"}
-        </p>
+      <h1 className="auth2-title">Categorizador de Figurinhas</h1>
 
-        <form className="auth-form" onSubmit={submit} noValidate>
-          <label className="auth-field">
-            <span>E-mail</span>
-            <input
-              type="email"
-              autoComplete="email"
-              inputMode="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="voce@email.com"
-              disabled={loading}
-            />
-          </label>
-          <label className="auth-field">
-            <span>Senha</span>
-            <input
-              type="password"
-              autoComplete={mode === "signin" ? "current-password" : "new-password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              disabled={loading}
-            />
-          </label>
+      <div className="auth2-spacer" />
 
-          {error && <div className="auth-msg error">{error}</div>}
-          {info && <div className="auth-msg info">{info}</div>}
+      <label className="auth2-field">
+        <span className="auth2-label">Email</span>
+        <input
+          className="auth2-input"
+          type="email"
+          autoComplete="email"
+          inputMode="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="voce@gmail.com"
+          disabled={loading}
+        />
+      </label>
 
-          <button type="submit" className="auth-primary" disabled={loading}>
-            {loading
-              ? (mode === "signin" ? "Entrando…" : "Criando conta…")
-              : (mode === "signin" ? "Entrar" : "Criar conta")}
-          </button>
+      <label className="auth2-field">
+        <span className="auth2-label">Senha</span>
+        <input
+          className="auth2-input"
+          type="password"
+          autoComplete={mode === "signin" ? "current-password" : "new-password"}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="************"
+          disabled={loading}
+        />
+      </label>
 
-          <button
-            type="button"
-            className="auth-secondary"
-            onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError(""); setInfo(""); }}
-            disabled={loading}
-          >
-            {mode === "signin" ? "Criar uma conta nova" : "Já tenho conta — Entrar"}
-          </button>
-        </form>
+      {error && <div className="auth2-msg error">{error}</div>}
+      {info && <div className="auth2-msg info">{info}</div>}
+
+      <div className="auth2-actions">
+        <button type="submit" className="auth2-btn primary" disabled={loading}>
+          {loading
+            ? (mode === "signin" ? "Entrando…" : "Criando conta…")
+            : (mode === "signin" ? "Entrar" : "Criar conta")}
+        </button>
+        <button
+          type="button"
+          className="auth2-btn secondary"
+          onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError(""); setInfo(""); }}
+          disabled={loading}
+        >
+          {mode === "signin" ? "Criar nova conta" : "Já tenho conta — Entrar"}
+        </button>
       </div>
-    </div>
+    </form>
   );
 }
 

@@ -76,14 +76,23 @@ function App() {
   // Bootstrap: read existing session + subscribe to changes
   useEffect(() => {
     let mounted = true;
+    // Enforce a minimum 3s on the initial loading screen so the Carregar
+    // animation always plays through before the login/home appears.
+    const MIN_LOAD_MS = 3000;
+    const startedAt = Date.now();
+    const finishReady = () => {
+      const elapsed = Date.now() - startedAt;
+      const wait = Math.max(0, MIN_LOAD_MS - elapsed);
+      setTimeout(() => { if (mounted) setAuthReady(true); }, wait);
+    };
 
     getSession().then((s) => {
       if (!mounted) return;
       setSession(s);
-      setAuthReady(true);
+      finishReady();
     }).catch(() => {
       if (!mounted) return;
-      setAuthReady(true);
+      finishReady();
     });
 
     const sub = onAuthChange((s) => {
