@@ -76,23 +76,14 @@ function App() {
   // Bootstrap: read existing session + subscribe to changes
   useEffect(() => {
     let mounted = true;
-    // Enforce a minimum 3s on the initial loading screen so the Carregar
-    // animation always plays through before the login/home appears.
-    const MIN_LOAD_MS = 3000;
-    const startedAt = Date.now();
-    const finishReady = () => {
-      const elapsed = Date.now() - startedAt;
-      const wait = Math.max(0, MIN_LOAD_MS - elapsed);
-      setTimeout(() => { if (mounted) setAuthReady(true); }, wait);
-    };
 
     getSession().then((s) => {
       if (!mounted) return;
       setSession(s);
-      finishReady();
+      setAuthReady(true);
     }).catch(() => {
       if (!mounted) return;
-      finishReady();
+      setAuthReady(true);
     });
 
     const sub = onAuthChange((s) => {
@@ -117,6 +108,15 @@ function App() {
     let cancelled = false;
     setStickersLoading(true);
     setErrorMsg("");
+    // Hold the loading screen for at least 3s so the Carregar animation
+    // always gets a chance to display, even if the fetch resolves instantly.
+    const MIN_LOAD_MS = 3000;
+    const startedAt = Date.now();
+    const stopLoading = () => {
+      if (cancelled) return;
+      const wait = Math.max(0, MIN_LOAD_MS - (Date.now() - startedAt));
+      setTimeout(() => { if (!cancelled) setStickersLoading(false); }, wait);
+    };
     fetchStickers(session.user.id)
       .then((map) => {
         if (cancelled) return;
@@ -127,9 +127,7 @@ function App() {
         setErrorMsg("Falha ao carregar suas figurinhas. Verifique a conexão.");
         console.error(err);
       })
-      .finally(() => {
-        if (!cancelled) setStickersLoading(false);
-      });
+      .finally(stopLoading);
 
     return () => { cancelled = true; };
   }, [session?.user?.id]);
