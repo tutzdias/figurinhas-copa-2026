@@ -68,6 +68,7 @@ function App() {
   // ---- Stickers state ----
   const [owned, setOwned] = useState({});
   const [stickersLoading, setStickersLoading] = useState(false);
+  const [loadingFading, setLoadingFading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
   // ---- Routing ----
@@ -115,7 +116,17 @@ function App() {
     const stopLoading = () => {
       if (cancelled) return;
       const wait = Math.max(0, MIN_LOAD_MS - (Date.now() - startedAt));
-      setTimeout(() => { if (!cancelled) setStickersLoading(false); }, wait);
+      setTimeout(() => {
+        if (cancelled) return;
+        // Quick fade-out of the loading overlay into the home screen, then
+        // unmount the overlay.
+        setLoadingFading(true);
+        setTimeout(() => {
+          if (cancelled) return;
+          setStickersLoading(false);
+          setLoadingFading(false);
+        }, 420);
+      }, wait);
     };
     fetchStickers(session.user.id)
       .then((map) => {
@@ -456,10 +467,6 @@ function App() {
     return <div className="app-shell"><AuthScreen /></div>;
   }
 
-  if (stickersLoading) {
-    return <div className="app-shell"><LoadingScreen message="Carregando suas figurinhas…" /></div>;
-  }
-
   let screen = null;
   if (route === "home") {
     screen = (
@@ -558,6 +565,11 @@ function App() {
         />
       )}
       <ErrorBanner message={errorMsg} onDismiss={() => setErrorMsg("")} />
+      {stickersLoading && (
+        <div className={"carregar-overlay" + (loadingFading ? " fade-out" : "")}>
+          <LoadingScreen message="Carregando suas figurinhas…" />
+        </div>
+      )}
       {celebration && window.CongratsScreen && (
         <window.CongratsScreen
           completedCount={celebration.completedCount}

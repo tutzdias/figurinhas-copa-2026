@@ -1252,6 +1252,20 @@ input {
 }
 
 /* ====== LOADING SCREEN (Carregar) ====== */
+/* Overlay wrapper so the loading screen can fade out to reveal Home. */
+.carregar-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  opacity: 1;
+  transition: opacity 420ms ease;
+}
+.carregar-overlay.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .carregar {
   flex: 1;
   position: relative;
