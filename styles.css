@@ -1322,79 +1322,41 @@ input {
   width: 100%;
   min-height: 100%;
   overflow: hidden;
-  background: #F2F2F0;
   display: flex;
+  /* Tall vertical gradient cycling lime → amber → black → lime …
+     The visible viewport is one "window" into a 4-screen-tall image;
+     scrolling background-position by a full screen each third gives the
+     three states from the prototype and loops seamlessly (start and end
+     windows are both lime→amber). */
+  background: linear-gradient(
+    180deg,
+    #D8F369 0%,
+    #EFB839 25%,
+    #0A0A0A 50%,
+    #D8F369 75%,
+    #EFB839 100%
+  );
+  background-size: 100% 400%;
+  background-position: 0% 0%;
+  animation: carregarShift 9s linear infinite;
 }
-
-/* Ambient mesh gradient: large blurred color blobs drifting on a steady,
-   infinite loop. Palette strictly #F2F2F0 / #D8F369 / #EFB839. */
-.carregar-mesh {
-  position: absolute;
-  inset: -25%;
-  filter: blur(60px);
-  pointer-events: none;
-}
-.carregar-blob {
-  position: absolute;
-  display: block;
-  border-radius: 50%;
-  will-change: transform;
-}
-.carregar-blob.blob-a {
-  width: 80%;
-  height: 80%;
-  left: -10%;
-  top: -8%;
-  background: radial-gradient(circle at 50% 50%, #D8F369 0%, rgba(216,243,105,0) 68%);
-  animation: meshDriftA 14s ease-in-out infinite;
-}
-.carregar-blob.blob-b {
-  width: 85%;
-  height: 85%;
-  right: -14%;
-  top: 18%;
-  background: radial-gradient(circle at 50% 50%, #EFB839 0%, rgba(239,184,57,0) 66%);
-  animation: meshDriftB 17s ease-in-out infinite;
-}
-.carregar-blob.blob-c {
-  width: 70%;
-  height: 70%;
-  left: 8%;
-  bottom: -12%;
-  background: radial-gradient(circle at 50% 50%, #D8F369 0%, rgba(216,243,105,0) 64%);
-  animation: meshDriftC 20s ease-in-out infinite;
-}
-@keyframes meshDriftA {
-  0%   { transform: translate(0, 0) scale(1); }
-  33%  { transform: translate(18%, 12%) scale(1.18); }
-  66%  { transform: translate(8%, -10%) scale(0.92); }
-  100% { transform: translate(0, 0) scale(1); }
-}
-@keyframes meshDriftB {
-  0%   { transform: translate(0, 0) scale(1); }
-  30%  { transform: translate(-20%, 8%) scale(0.9); }
-  60%  { transform: translate(-8%, 20%) scale(1.2); }
-  100% { transform: translate(0, 0) scale(1); }
-}
-@keyframes meshDriftC {
-  0%   { transform: translate(0, 0) scale(1); }
-  40%  { transform: translate(14%, -16%) scale(1.15); }
-  70%  { transform: translate(-10%, -6%) scale(0.95); }
-  100% { transform: translate(0, 0) scale(1); }
+@keyframes carregarShift {
+  0%   { background-position: 0% 0%; }
+  100% { background-position: 0% 100%; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .carregar-blob { animation: none; }
+  .carregar { animation: none; }
 }
 
 /* Sleek white progress tracker pinned to the bottom, safe-area aware. */
 .carregar-track {
   position: absolute;
-  left: 24px;
-  right: 24px;
-  bottom: calc(28px + env(safe-area-inset-bottom, 0px));
-  height: 6px;
+  left: 22px;
+  right: 22px;
+  bottom: calc(22px + env(safe-area-inset-bottom, 0px));
+  height: 5px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.3);
   overflow: hidden;
   z-index: 2;
 }
@@ -1402,7 +1364,7 @@ input {
   height: 100%;
   border-radius: 999px;
   background: #FFFFFF;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12);
   transition: width 120ms linear;
 }
 

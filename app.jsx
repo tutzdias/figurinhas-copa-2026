@@ -22,12 +22,6 @@ function LoadingScreen({ message }) {
 
   return (
     <div className="carregar">
-      <div className="carregar-mesh" aria-hidden="true">
-        <span className="carregar-blob blob-a" />
-        <span className="carregar-blob blob-b" />
-        <span className="carregar-blob blob-c" />
-      </div>
-
       <div className="carregar-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label={message || "Carregando"}>
         <div className="carregar-fill" style={{ width: progress + "%" }} />
       </div>
