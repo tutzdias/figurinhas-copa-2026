@@ -4,7 +4,7 @@
 (function () {
   const { useEffect, useRef } = React;
 
-  function HomeScreen2({ owned, totalOwned, total, onSeeAll, onLogout, userEmail, lastSeen }) {
+  function HomeScreen2({ owned, totalOwned, total, onSeeAll, onLogout, userEmail, lastSeen, ready }) {
     const pct = total ? Math.round((totalOwned / total) * 100) : 0;
 
     // NumberFlow animates count + percentage from the value the user last saw
@@ -32,18 +32,33 @@
       }
     };
 
+    // Re-run when the values change (e.g. when stickers finish loading after
+    // the Home screen has already mounted) so the number-flow elements update
+    // from the last-seen value to the freshly-loaded one.
+    //
+    // While `ready` is false the loading overlay still covers the screen, so we
+    // hold the numbers at 0 (no animation). The roll-up fires only once loading
+    // ends and `ready` flips true — that way the user actually sees it.
     useEffect(() => {
       slowTiming(countRef.current);
-      const from = lastSeen.totalOwned == null ? totalOwned : lastSeen.totalOwned;
+      if (!ready) {
+        window.flowUpdate(countRef.current, 0);
+        return;
+      }
+      const from = lastSeen.totalOwned == null ? 0 : lastSeen.totalOwned;
       window.flowAnimate(countRef.current, from, totalOwned);
       lastSeen.totalOwned = totalOwned;
-    }, []); // eslint-disable-line
+    }, [ready, totalOwned]); // eslint-disable-line
     useEffect(() => {
       slowTiming(pctRef.current);
-      const from = lastSeen.pct == null ? pct : lastSeen.pct;
+      if (!ready) {
+        window.flowUpdate(pctRef.current, 0);
+        return;
+      }
+      const from = lastSeen.pct == null ? 0 : lastSeen.pct;
       window.flowAnimate(pctRef.current, from, pct);
       lastSeen.pct = pct;
-    }, []); // eslint-disable-line
+    }, [ready, pct]); // eslint-disable-line
 
     return (
       <div className="home2" style={{ "--pct": pct }}>

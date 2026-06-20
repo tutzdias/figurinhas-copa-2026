@@ -479,6 +479,7 @@ function App() {
         onLogout={handleLogout}
         userEmail={session.user.email}
         lastSeen={lastSeenHome.current}
+        ready={!stickersLoading}
       />
     );
   } else if (route === "all") {
@@ -540,6 +541,7 @@ function App() {
           onLogout={handleLogout}
           userEmail={session.user.email}
           lastSeen={lastSeenHome.current}
+          ready={!stickersLoading}
         />
       </div>
     ) : null;
