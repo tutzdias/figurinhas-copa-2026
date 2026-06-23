@@ -1,5 +1,24 @@
 /* Main app — auth gating, Supabase persistence, screen routing */
 
+/* Run `cb` after the next paint. Prefers a double requestAnimationFrame for
+   smooth timing, but GUARANTEES the callback runs via a setTimeout fallback —
+   requestAnimationFrame is paused in in-app browsers ("navegador"), background
+   tabs, and throttled/low-power contexts, and a transition that depends on it
+   alone would hang forever (leaving the morph overlay stuck over the screen). */
+function afterPaint(cb) {
+  let done = false;
+  const run = () => {
+    if (done) return;
+    done = true;
+    cb();
+  };
+  if (typeof requestAnimationFrame === "function") {
+    requestAnimationFrame(() => requestAnimationFrame(run));
+  }
+  // Fallback: fires if rAF is throttled/paused so the transition always finishes.
+  setTimeout(run, 80);
+}
+
 function LoadingScreen({ message }) {
   const [progress, setProgress] = React.useState(0);
 
@@ -352,10 +371,8 @@ function App() {
     if (cell) cell.style.visibility = "hidden";
 
     setCountryMorph({ from, code, shellWidth: s.width, shellRect, phase: "init" });
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        setCountryMorph((m) => m && { ...m, phase: "expand" });
-      });
+    afterPaint(() => {
+      setCountryMorph((m) => m && { ...m, phase: "expand" });
     });
     window.setTimeout(() => {
       // Reset shell scroll so the new detail screen lands at the top —
@@ -363,11 +380,9 @@ function App() {
       shell.scrollTop = 0;
       setRoute("country:" + code);
       // Let the detail screen mount, then drop the overlay.
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setCountryMorph(null);
-          if (cell) cell.style.visibility = "";
-        });
+      afterPaint(() => {
+        setCountryMorph(null);
+        if (cell) cell.style.visibility = "";
       });
     }, 480);
   };
@@ -403,8 +418,7 @@ function App() {
 
     // After AllCountries renders, restore the saved scroll position so the
     // cell sits where the user remembers — then measure it.
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
+    afterPaint(() => {
         const shell2 = document.querySelector(".app-shell");
         if (shell2) shell2.scrollTop = savedAllScrollY.current || 0;
         const cell = document.querySelector(`[data-country-code="${code}"]`);
@@ -434,7 +448,6 @@ function App() {
           setReverseMorph(null);
           if (cell) cell.style.visibility = "";
         }, 90 + 280 + 30);
-      });
     });
   };
 
@@ -730,7 +743,7 @@ function SharedCountryMorph({ morph, allCountries, groups, owned }) {
         >
           <div className="cm-static-row">
             <span className="cm-back-btn">
-              <window.BackIcon />
+              <window.CloseIcon />
             </span>
             <span className="cm-flag">{country.flag}</span>
           </div>
@@ -853,7 +866,7 @@ function SharedCountryReverseMorph({ morph, allCountries, groups, owned }) {
         >
           <div className="cm-static-row">
             <span className="cm-back-btn">
-              <window.BackIcon />
+              <window.CloseIcon />
             </span>
             <span className="cm-flag">{country.flag}</span>
           </div>
