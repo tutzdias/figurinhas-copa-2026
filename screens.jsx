@@ -365,7 +365,7 @@ function FaltantesView({ groups, owned, query, onMark }) {
         <div key={country.code} className="faltantes-country">
           <div className="faltantes-head">
             <span className="faltantes-flag">{country.flag}</span>
-            <span className="faltantes-name">{country.name}</span>
+            <span className="faltantes-name">{country.name}<span className="faltantes-code"> · {country.code}</span></span>
           </div>
           <div className="faltantes-stickers">
             {missing.map(({ n, key, phase }) => (
@@ -501,8 +501,8 @@ function CountryDetailScreen({ countryCode, owned, setOwned, allCountries, group
     <div className={"detail-screen" + (exiting ? " detail-exiting" : "")}>
       <div className={"detail-card" + (opening ? " detail-opening" : "")}>
         <div className="detail-static-row">
-          <button className="back-btn" onClick={onBack} aria-label="Voltar">
-            <BackIcon />
+          <button className="back-btn" onClick={onBack} aria-label="Fechar">
+            <CloseIcon />
           </button>
           <span className="country-flag-large">{country.flag}</span>
         </div>

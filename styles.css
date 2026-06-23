@@ -619,6 +619,13 @@ input {
   color: #111;
   min-width: 0;
 }
+.faltantes-code {
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
 .faltantes-stickers {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
