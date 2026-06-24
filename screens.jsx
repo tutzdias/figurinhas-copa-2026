@@ -450,7 +450,9 @@ function CountryDetailScreen({ countryCode, owned, setOwned, allCountries, group
   const country = allCountries[idx];
   const prev = idx > 0 ? allCountries[idx - 1] : null;
   const next = idx < allCountries.length - 1 ? allCountries[idx + 1] : null;
-  const pct = Math.round(countryProgress(country, owned).pct * 100);
+  // Guard: countryProgress crashes if country is undefined (bad route state).
+  // Compute safely here so hooks below always run in the same order.
+  const pct = country ? Math.round(countryProgress(country, owned).pct * 100) : 0;
 
   // NumberFlow for current pane's percentage
   const numberFlowRef = useRef(null);
@@ -496,6 +498,9 @@ function CountryDetailScreen({ countryCode, owned, setOwned, allCountries, group
     const t = setTimeout(() => setOpening(false), 1000);
     return () => clearTimeout(t);
   }, []);
+
+  // All hooks called above — safe to return early now.
+  if (!country) return <div className="detail-screen" />;
 
   return (
     <div className={"detail-screen" + (exiting ? " detail-exiting" : "")}>

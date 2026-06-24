@@ -410,12 +410,12 @@ function App() {
       // Reset shell scroll so the new detail screen lands at the top —
       // exactly where the morph element finished animating to.
       shell.scrollTop = 0;
+      // Clear morph and set route in the same tick so they batch into one
+      // render — avoids a window where the route has changed but the morph
+      // backdrop still covers the screen (visible on slow/in-app browsers).
       setRoute("country:" + code);
-      // Let the detail screen mount, then drop the overlay.
-      afterPaint(() => {
-        setCountryMorph(null);
-        if (cell) cell.style.visibility = "";
-      });
+      setCountryMorph(null);
+      if (cell) cell.style.visibility = "";
     }, 480);
   };
 
