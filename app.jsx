@@ -324,6 +324,38 @@ function App() {
   // ---- Reverse morph (back button: detail card → country square) ----
   const [reverseMorph, setReverseMorph] = useState(null);
 
+  // ---- Morph safety nets ---------------------------------------------------
+  // The open/close morphs are driven by a short chain of timers + rAF. The
+  // overlay includes a full-screen solid #1A1A1A backdrop (z-index 100), so if
+  // that chain ever stalls — paused requestAnimationFrame / throttled timers in
+  // an in-app browser ("navegador"), a backgrounded tab, low-power mode — the
+  // black backdrop would be left covering the screen, looking like an empty
+  // black page. These effects guarantee the overlay is always torn down (and
+  // the destination route reached) after a hard maximum, so the user can never
+  // get stranded on a blank screen.
+  useEffect(() => {
+    if (!countryMorph) return;
+    const code = countryMorph.code;
+    const safety = setTimeout(() => {
+      setRoute((r) => (r === "country:" + code ? r : "country:" + code));
+      setCountryMorph(null);
+      const cell = document.querySelector(`[data-country-code="${code}"]`);
+      if (cell) cell.style.visibility = "";
+    }, 1100);
+    return () => clearTimeout(safety);
+  }, [countryMorph]);
+
+  useEffect(() => {
+    if (!reverseMorph) return;
+    const code = reverseMorph.code;
+    const safety = setTimeout(() => {
+      setReverseMorph(null);
+      const cell = document.querySelector(`[data-country-code="${code}"]`);
+      if (cell) cell.style.visibility = "";
+    }, 1200);
+    return () => clearTimeout(safety);
+  }, [reverseMorph]);
+
   // ---- Detail-screen exit ("Ver Todos" footer button: slide-down + fade) ----
   const [detailExiting, setDetailExiting] = useState(false);
 
