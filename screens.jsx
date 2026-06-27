@@ -115,7 +115,7 @@ function HomeScreen({ owned, totalOwned, total, countries, onSeeAll, onLogout, u
 
         <button className="home-cta" onClick={onSeeAll}>
           Ver Todos os Países
-          <span className="arrow"><ArrowRightIcon /></span>
+          <span className="arrow"><window.ArrowRightIcon /></span>
         </button>
       </div>
     </div>
@@ -173,7 +173,7 @@ function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelect
       <div className="list-header">
         <div className="list-header-top">
           <button className="icon-btn" onClick={onBack} aria-label="Voltar">
-            <BackIcon />
+            <window.BackIcon />
           </button>
         </div>
         <h1 className="list-title">Todos os Países</h1>
@@ -194,7 +194,7 @@ function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelect
             onClick={() => setMode("faltantes")}
             aria-pressed={mode === "faltantes"}
           >
-            <FaltantesIcon active={mode === "faltantes"} />
+            <window.FaltantesIcon active={mode === "faltantes"} />
             <span>Faltantes</span>
           </button>
           <button
@@ -202,7 +202,7 @@ function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelect
             onClick={() => setMode("group")}
             aria-pressed={mode === "group"}
           >
-            <GridIcon active={mode === "group"} />
+            <window.GridIcon active={mode === "group"} />
             <span>Grupos</span>
           </button>
           <button
@@ -210,7 +210,7 @@ function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelect
             onClick={() => setMode("az")}
             aria-pressed={mode === "az"}
           >
-            <AzIcon active={mode === "az"} />
+            <window.AzIcon active={mode === "az"} />
             <span>A–Z</span>
           </button>
         </nav>
@@ -523,7 +523,7 @@ function CountryDetailScreen({ countryCode, owned, setOwned, allCountries, group
       <div className={"detail-card" + (opening ? " detail-opening" : "")}>
         <div className="detail-static-row">
           <button className="back-btn" onClick={onBack} aria-label="Fechar">
-            <CloseIcon />
+            <window.CloseIcon />
           </button>
           <span className="country-flag-large">{country.flag}</span>
         </div>
@@ -569,7 +569,7 @@ function CountryDetailScreen({ countryCode, owned, setOwned, allCountries, group
           onClick={() => prev && onSelectCountry(prev.code)}
           aria-label="País anterior"
         >
-          <ArrowLeftIcon />
+          <window.ArrowLeftIcon />
         </button>
         <button className="view-all" onClick={onSeeAll}>Ver Todos</button>
         <button
@@ -578,7 +578,7 @@ function CountryDetailScreen({ countryCode, owned, setOwned, allCountries, group
           onClick={() => next && onSelectCountry(next.code)}
           aria-label="Próximo país"
         >
-          <ArrowRightLargeIcon />
+          <window.ArrowRightLargeIcon />
         </button>
       </div>
     </div>
