@@ -1,6 +1,6 @@
 /* Screens — Home, AllCountries, CountryDetail */
 
-const { useState, useMemo, useEffect, useRef } = React;
+const { useState, useMemo, useEffect, useLayoutEffect, useRef } = React;
 
 // ---------- NumberFlow helper ----------
 // Safely call <number-flow>'s .update(value); waits for custom-element upgrade if needed.
@@ -498,6 +498,16 @@ function CountryDetailScreen({ countryCode, owned, setOwned, allCountries, group
     const t = setTimeout(() => setOpening(false), 1000);
     return () => clearTimeout(t);
   }, []);
+
+  // Scroll the shell to top synchronously before the first paint so the card
+  // is never below the visible area. On iOS Safari the programmatic
+  // scrollTop=0 set during the morph transition can be silently overridden by
+  // the browser's scroll restoration when the DOM content changes, leaving the
+  // card above the viewport and showing only the dark #1A1A1A background.
+  useLayoutEffect(() => {
+    const shell = document.querySelector('.app-shell');
+    if (shell) shell.scrollTop = 0;
+  }, []); // [] = only on mount
 
   // All hooks called above — safe to return early now.
   if (!country) return <div className="detail-screen" />;
