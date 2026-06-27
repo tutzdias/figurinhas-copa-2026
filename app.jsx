@@ -1,5 +1,33 @@
 /* Main app — auth gating, Supabase persistence, screen routing */
 
+class AppErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+  static getDerivedStateFromError(err) {
+    return { error: err };
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="app-shell" style={{ display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 16, padding: 32, color: "#fff", textAlign: "center" }}>
+          <div style={{ fontSize: 40 }}>⚠️</div>
+          <div style={{ fontWeight: 700, fontSize: 18 }}>Algo deu errado</div>
+          <div style={{ fontSize: 13, opacity: 0.7, maxWidth: 280 }}>{String(this.state.error)}</div>
+          <button
+            style={{ marginTop: 8, padding: "12px 24px", borderRadius: 999, background: "#D4F455", color: "#111", fontWeight: 700, border: "none", fontSize: 15, cursor: "pointer" }}
+            onClick={() => { this.setState({ error: null }); window.location.reload(); }}
+          >
+            Recarregar
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 /* Run `cb` after the next paint. Prefers a double requestAnimationFrame for
    smooth timing, but GUARANTEES the callback runs via a setTimeout fallback —
    requestAnimationFrame is paused in in-app browsers ("navegador"), background
@@ -710,8 +738,9 @@ function SharedCountryMorph({ morph, allCountries, groups, owned }) {
   const isComplete = pct === 100;
   const isZero = p.owned === 0;
   const groupOf = groups.find((g) => g.countries.some((c) => c.code === code));
-  const groupLabel =
-    groupOf.id === "ESP" ? "Grupo Especial" : `Grupo ${groupOf.label}`;
+  const groupLabel = !groupOf
+    ? code
+    : groupOf.id === "ESP" ? "Grupo Especial" : `Grupo ${groupOf.label}`;
 
   const fromStyle = {
     top: from.y + "px",
@@ -833,8 +862,9 @@ function SharedCountryReverseMorph({ morph, allCountries, groups, owned }) {
   const isComplete = pct === 100;
   const isZero = p.owned === 0;
   const groupOf = groups.find((g) => g.countries.some((c) => c.code === code));
-  const groupLabel =
-    groupOf.id === "ESP" ? "Grupo Especial" : `Grupo ${groupOf.label}`;
+  const groupLabel = !groupOf
+    ? code
+    : groupOf.id === "ESP" ? "Grupo Especial" : `Grupo ${groupOf.label}`;
 
   // Card-shape style (init + fading): matches the original detail-card.
   const cardStyle = {
@@ -941,4 +971,8 @@ function SharedCountryReverseMorph({ morph, allCountries, groups, owned }) {
 }
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(<App />);
+root.render(
+  <AppErrorBoundary>
+    <App />
+  </AppErrorBoundary>
+);

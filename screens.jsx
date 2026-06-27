@@ -396,7 +396,9 @@ function CountryPane({ code, allCountries, groups, owned, onToggle, numberFlowRe
   const pct = Math.round(p.pct * 100);
   const isComplete = pct === 100;
   const groupOf = groups.find(g => g.countries.some(c => c.code === code));
-  const groupLabel = groupOf.id === "ESP" ? "Grupo Especial" : `Grupo ${groupOf.label}`;
+  const groupLabel = !groupOf
+    ? code
+    : groupOf.id === "ESP" ? "Grupo Especial" : `Grupo ${groupOf.label}`;
 
   return (
     <React.Fragment>
@@ -499,15 +501,19 @@ function CountryDetailScreen({ countryCode, owned, setOwned, allCountries, group
     return () => clearTimeout(t);
   }, []);
 
-  // Scroll the shell to top synchronously before the first paint so the card
-  // is never below the visible area. On iOS Safari the programmatic
-  // scrollTop=0 set during the morph transition can be silently overridden by
-  // the browser's scroll restoration when the DOM content changes, leaving the
-  // card above the viewport and showing only the dark #1A1A1A background.
+  // Force the shell to scrollTop=0 before and after the first paint. iOS
+  // Safari can asynchronously restore the previous scroll offset after React's
+  // DOM commit, pushing the detail-card above the viewport and leaving only
+  // the dark #1A1A1A background visible. We reset in useLayoutEffect (before
+  // paint) AND in rAF + setTimeout (after paint) to defeat any async restore.
   useLayoutEffect(() => {
     const shell = document.querySelector('.app-shell');
-    if (shell) shell.scrollTop = 0;
-  }, []); // [] = only on mount
+    if (!shell) return;
+    shell.scrollTop = 0;
+    const raf = requestAnimationFrame(() => { shell.scrollTop = 0; });
+    const t = setTimeout(() => { shell.scrollTop = 0; }, 100);
+    return () => { cancelAnimationFrame(raf); clearTimeout(t); };
+  }, []);
 
   // All hooks called above — safe to return early now.
   if (!country) return <div className="detail-screen" />;
