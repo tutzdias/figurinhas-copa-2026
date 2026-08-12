@@ -717,7 +717,7 @@
 }
 .home2-stamp-badge.dropping {
   display: block;
-  animation: stampDropBounce 660ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation: stampDropBounce 990ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 .home2-stamp-badge.visible {
   display: block;

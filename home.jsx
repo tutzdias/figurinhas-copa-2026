@@ -4,7 +4,10 @@
   const { useEffect, useRef, useState } = React;
 
   function HomeScreen2({ owned, totalOwned, total, onSeeAll, onLogout, userEmail, lastSeen, ready, onStampTap, stampHidden, stampRef }) {
-    const pct = total ? Math.round((totalOwned / total) * 100) : 0;
+    // Only show 100% when every sticker is owned — rounding can reach 100 at 993/994
+    const pct = total
+      ? (totalOwned >= total ? 100 : Math.min(99, Math.round((totalOwned / total) * 100)))
+      : 0;
 
     const countRef = useRef(null);
     const pctRef = useRef(null);
@@ -50,9 +53,12 @@
     useEffect(() => {
       if (!ready) return;
       if (pct === 100 && stampAnim === null) {
-        setStampAnim("dropping");
-        const t = setTimeout(() => setStampAnim("visible"), 700);
-        return () => clearTimeout(t);
+        const delay = setTimeout(() => {
+          setStampAnim("dropping");
+          const t = setTimeout(() => setStampAnim("visible"), 1050);
+          return () => clearTimeout(t);
+        }, 2000);
+        return () => clearTimeout(delay);
       }
       if (pct < 100 && (stampAnim === "visible" || stampAnim === "dropping")) {
         setStampAnim("fading");

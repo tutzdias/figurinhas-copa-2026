@@ -152,7 +152,9 @@ function AllCountriesScreen({ owned, totalOwned, total, groups, onBack, onSelect
     prevModeRef.current = mode;
   }
 
-  const pct = total ? Math.round((totalOwned / total) * 100) : 0;
+  const pct = total
+    ? (totalOwned >= total ? 100 : Math.min(99, Math.round((totalOwned / total) * 100)))
+    : 0;
 
   const filteredGroups = useMemo(() => {
     const q = query.trim().toLowerCase();
