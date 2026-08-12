@@ -352,10 +352,19 @@ function App() {
 
   const STAMP_ASPECT = 1148 / 912; // height / width of FINAL 2-BG.png
 
+  // Returns the viewport position of the stamp as it appears in the Selos screen
+  // (position: absolute; top:32; left:16; width:250 inside .app-shell)
+  const getSelosStampRect = () => {
+    const shell = document.querySelector('.app-shell');
+    const sr = shell ? shell.getBoundingClientRect() : { top: 0, left: 0 };
+    return { top: sr.top + 32, left: sr.left + 16, width: 250 };
+  };
+
   const handleOpenSelos = (rect) => {
     if (stampTransition) return;
     const from = { top: rect.top, left: rect.left, width: rect.width };
-    setStampTransition({ dir: "open", from, to: null, phase: "init" });
+    const to = getSelosStampRect();
+    setStampTransition({ dir: "open", from, to, phase: "init" });
     afterPaint(() => {
       setStampTransition(m => m && { ...m, phase: "expand" });
     });
@@ -367,16 +376,8 @@ function App() {
 
   const handleBackFromSelos = () => {
     if (stampTransition) return;
-    const vpW = window.innerWidth;
-    const vpH = window.innerHeight;
-    const STAMP_W = 220;
-    const STAMP_H = STAMP_W * STAMP_ASPECT;
-    const centerFrom = {
-      top: (vpH - STAMP_H) / 2,
-      left: (vpW - STAMP_W) / 2,
-      width: STAMP_W,
-    };
-    setStampTransition({ dir: "close", from: centerFrom, to: null, phase: "init" });
+    const from = getSelosStampRect();
+    setStampTransition({ dir: "close", from, to: null, phase: "init" });
     setRoute("home");
     afterPaint(() => {
       const el = homeStampRef.current;
@@ -702,7 +703,7 @@ function App() {
         />
       )}
       {stampTransition && (
-        <SharedStampMorph transition={stampTransition} stampAspect={STAMP_ASPECT} />
+        <SharedStampMorph transition={stampTransition} />
       )}
       <ErrorBanner message={errorMsg} onDismiss={() => setErrorMsg("")} />
       {stickersLoading && (
@@ -1039,59 +1040,49 @@ function SharedCountryReverseMorph({ morph, allCountries, groups, owned }) {
 function StampScreen({ onBack, stampHidden }) {
   return (
     <div className="stamp-screen">
-      <button className="stamp-screen-back" onClick={onBack} aria-label="Voltar">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M15 18l-6-6 6-6" />
-        </svg>
-      </button>
-      <div className="stamp-screen-center" style={{ visibility: stampHidden ? "hidden" : undefined }}>
+      <button
+        className="stamp-screen-stamp"
+        onClick={onBack}
+        aria-label="Voltar"
+        style={{ visibility: stampHidden ? "hidden" : undefined }}
+      >
         <img src="FINAL 2-BG.png" alt="Selo de conclusão do álbum" className="stamp-screen-img" />
-      </div>
-      <div className="stamp-screen-nav prev">‹</div>
-      <div className="stamp-screen-nav next">›</div>
+      </button>
     </div>
   );
 }
 
 /* ===== Shared-element morph: Home stamp ↔ Selos page ===== */
-function SharedStampMorph({ transition, stampAspect }) {
+function SharedStampMorph({ transition }) {
   const { dir, from, to, phase } = transition;
 
-  const vpW = window.innerWidth;
-  const vpH = window.innerHeight;
-  const STAMP_W_BIG = 220;
-  const STAMP_H_BIG = STAMP_W_BIG * stampAspect;
-  const centerLeft = (vpW - STAMP_W_BIG) / 2;
-  const centerTop  = (vpH - STAMP_H_BIG) / 2;
-
-  let stampPos;
+  // home stamp: rotate(-13.81deg) / selos stamp: no rotation
+  let stampPos, rotation;
   if (dir === "open") {
-    stampPos = phase === "expand"
-      ? { top: centerTop, left: centerLeft, width: STAMP_W_BIG }
-      : { top: from.top,  left: from.left,  width: from.width };
+    const atDest = phase === "expand" && to;
+    stampPos  = atDest ? to   : from;
+    rotation  = atDest ? "rotate(0deg)" : "rotate(-13.81deg)";
   } else {
-    // close: from = center position captured in handleBackFromSelos
-    stampPos = (phase === "collapse" && to)
-      ? { top: to.top,   left: to.left,   width: to.width }
-      : { top: from.top, left: from.left, width: from.width };
+    const atDest = phase === "collapse" && to;
+    stampPos  = atDest ? to   : from;
+    rotation  = atDest ? "rotate(-13.81deg)" : "rotate(0deg)";
   }
 
-  // stamp-bg fades in when opening (expand) or is already visible when closing (until collapse)
-  const bgVisible = dir === "open" ? phase === "expand" : phase !== "collapse";
-  // subtle home overlay dims the home content on close so the bg doesn't pop
+  const bgVisible  = dir === "open" ? phase === "expand" : phase !== "collapse";
   const dimVisible = dir === "close" && phase === "init";
 
   return (
     <div className="stamp-morph-root">
-      <div className={"stamp-morph-bg" + (bgVisible ? " on" : "")} />
+      <div className={"stamp-morph-bg"       + (bgVisible  ? " on" : "")} />
       <div className={"stamp-morph-home-dim" + (dimVisible ? " on" : "")} />
       <img
         src="FINAL 2-BG.png"
         className="stamp-morph-img"
         style={{
-          top:   stampPos.top  + "px",
-          left:  stampPos.left + "px",
-          width: stampPos.width + "px",
+          top:       stampPos.top   + "px",
+          left:      stampPos.left  + "px",
+          width:     stampPos.width + "px",
+          transform: rotation,
         }}
         alt=""
       />
