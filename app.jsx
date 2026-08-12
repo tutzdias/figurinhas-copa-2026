@@ -349,21 +349,28 @@ function App() {
   // ---- Stamp shared-element transition (Home stamp ↔ Selos page) ----
   const [stampTransition, setStampTransition] = useState(null);
   const homeStampRef = useRef(null);
-
-  const STAMP_ASPECT = 1148 / 912; // height / width of FINAL 2-BG.png
-
-  // Returns the viewport position of the stamp as it appears in the Selos screen
-  // (position: absolute; top:32; left:16; width:250 inside .app-shell)
-  const getSelosStampRect = () => {
-    const shell = document.querySelector('.app-shell');
-    const sr = shell ? shell.getBoundingClientRect() : { top: 0, left: 0 };
-    return { top: sr.top + 32, left: sr.left + 16, width: 250 };
-  };
+  const selosStampRef = useRef(null);
+  // Stores the last measured selos stamp rect so handleOpenSelos can use it
+  // even before the selos screen is mounted.
+  const selosStampRectCache = useRef(null);
 
   const handleOpenSelos = (rect) => {
     if (stampTransition) return;
     const from = { top: rect.top, left: rect.left, width: rect.width };
-    const to = getSelosStampRect();
+    // Use the cached rect from the last selos visit, or fall back to a rough
+    // computation (safe-area-inset-top resolved dynamically via a temp element).
+    let to = selosStampRectCache.current;
+    if (!to) {
+      const tmp = document.createElement('div');
+      tmp.style.cssText = 'position:fixed;top:0;left:0;padding-top:env(safe-area-inset-top,0px);visibility:hidden';
+      document.body.appendChild(tmp);
+      const safeTop = parseFloat(getComputedStyle(tmp).paddingTop) || 0;
+      document.body.removeChild(tmp);
+      const shell = document.querySelector('.app-shell');
+      const sl = shell ? shell.getBoundingClientRect().left : 0;
+      const st = shell ? shell.getBoundingClientRect().top  : 0;
+      to = { top: st + 32 + safeTop, left: sl + 16, width: 250 };
+    }
     setStampTransition({ dir: "open", from, to, phase: "init" });
     afterPaint(() => {
       setStampTransition(m => m && { ...m, phase: "expand" });
@@ -376,7 +383,14 @@ function App() {
 
   const handleBackFromSelos = () => {
     if (stampTransition) return;
-    const from = getSelosStampRect();
+    // Measure directly from the mounted selos stamp element.
+    const selosEl = selosStampRef.current;
+    const sr = selosEl ? selosEl.getBoundingClientRect() : null;
+    const from = sr
+      ? { top: sr.top, left: sr.left, width: sr.width }
+      : selosStampRectCache.current || { top: 32, left: 16, width: 250 };
+    // Cache for the next open transition.
+    selosStampRectCache.current = from;
     setStampTransition({ dir: "close", from, to: null, phase: "init" });
     setRoute("home");
     afterPaint(() => {
@@ -613,6 +627,7 @@ function App() {
       <StampScreen
         onBack={handleBackFromSelos}
         stampHidden={!!stampTransition}
+        stampRef={selosStampRef}
       />
     );
   } else if (route === "all") {
@@ -1037,10 +1052,11 @@ function SharedCountryReverseMorph({ morph, allCountries, groups, owned }) {
 }
 
 /* ===== Selos page ===== */
-function StampScreen({ onBack, stampHidden }) {
+function StampScreen({ onBack, stampHidden, stampRef }) {
   return (
     <div className="stamp-screen">
       <button
+        ref={stampRef}
         className="stamp-screen-stamp"
         onClick={onBack}
         aria-label="Voltar"
