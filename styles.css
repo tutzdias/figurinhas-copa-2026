@@ -397,7 +397,7 @@ input {
 .list-header {
   background: var(--color-dark);
   color: var(--color-text-inverse);
-  padding: 28px 24px 48px;
+  padding: calc(28px + env(safe-area-inset-top, 0px)) 24px 48px;
   border-bottom-left-radius: 24px;
   border-bottom-right-radius: 24px;
 }
@@ -910,7 +910,7 @@ input {
 .detail-pane.exiting-prev  { animation: paneSlideOutPrev 400ms cubic-bezier(0.32, 0.72, 0.24, 1) both; }
 
 .detail-header {
-  padding: 18px 24px 0;
+  padding: calc(18px + env(safe-area-inset-top, 0px)) 24px 0;
 }
 
 .detail-topbar {
