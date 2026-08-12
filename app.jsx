@@ -346,6 +346,55 @@ function App() {
     } catch {}
   }, [route, owned, countries, celebration]);
 
+  // ---- Stamp shared-element transition (Home stamp ↔ Selos page) ----
+  const [stampTransition, setStampTransition] = useState(null);
+  const homeStampRef = useRef(null);
+
+  const STAMP_ASPECT = 1148 / 912; // height / width of FINAL 2-BG.png
+
+  const handleOpenSelos = (rect) => {
+    if (stampTransition) return;
+    const from = { top: rect.top, left: rect.left, width: rect.width };
+    setStampTransition({ dir: "open", from, to: null, phase: "init" });
+    afterPaint(() => {
+      setStampTransition(m => m && { ...m, phase: "expand" });
+    });
+    window.setTimeout(() => {
+      setRoute("selos");
+      setStampTransition(null);
+    }, 560);
+  };
+
+  const handleBackFromSelos = () => {
+    if (stampTransition) return;
+    const vpW = window.innerWidth;
+    const vpH = window.innerHeight;
+    const STAMP_W = 220;
+    const STAMP_H = STAMP_W * STAMP_ASPECT;
+    const centerFrom = {
+      top: (vpH - STAMP_H) / 2,
+      left: (vpW - STAMP_W) / 2,
+      width: STAMP_W,
+    };
+    setStampTransition({ dir: "close", from: centerFrom, to: null, phase: "init" });
+    setRoute("home");
+    afterPaint(() => {
+      const el = homeStampRef.current;
+      if (!el) { setStampTransition(null); return; }
+      const r = el.getBoundingClientRect();
+      const to = { top: r.top, left: r.left, width: r.width };
+      setStampTransition(m => m && { ...m, to, phase: "collapse" });
+      window.setTimeout(() => setStampTransition(null), 560);
+    });
+  };
+
+  // Safety net: always clear a stuck stamp morph
+  useEffect(() => {
+    if (!stampTransition) return;
+    const safety = window.setTimeout(() => setStampTransition(null), 1400);
+    return () => clearTimeout(safety);
+  }, [stampTransition]);
+
   // ---- Shared-element transition (Country square → Country detail card) ----
   const [countryMorph, setCountryMorph] = useState(null);
 
@@ -553,6 +602,16 @@ function App() {
         userEmail={session.user.email}
         lastSeen={lastSeenHome.current}
         ready={!stickersLoading}
+        stampRef={homeStampRef}
+        stampHidden={!!stampTransition}
+        onStampTap={handleOpenSelos}
+      />
+    );
+  } else if (route === "selos") {
+    screen = (
+      <StampScreen
+        onBack={handleBackFromSelos}
+        stampHidden={!!stampTransition}
       />
     );
   } else if (route === "all") {
@@ -615,6 +674,9 @@ function App() {
           userEmail={session.user.email}
           lastSeen={lastSeenHome.current}
           ready={!stickersLoading}
+          stampRef={homeStampRef}
+          stampHidden={!!stampTransition}
+          onStampTap={handleOpenSelos}
         />
       </div>
     ) : null;
@@ -638,6 +700,9 @@ function App() {
           groups={groups}
           owned={owned}
         />
+      )}
+      {stampTransition && (
+        <SharedStampMorph transition={stampTransition} stampAspect={STAMP_ASPECT} />
       )}
       <ErrorBanner message={errorMsg} onDismiss={() => setErrorMsg("")} />
       {stickersLoading && (
@@ -966,6 +1031,70 @@ function SharedCountryReverseMorph({ morph, allCountries, groups, owned }) {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ===== Selos page ===== */
+function StampScreen({ onBack, stampHidden }) {
+  return (
+    <div className="stamp-screen">
+      <button className="stamp-screen-back" onClick={onBack} aria-label="Voltar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+      </button>
+      <div className="stamp-screen-center" style={{ visibility: stampHidden ? "hidden" : undefined }}>
+        <img src="FINAL 2-BG.png" alt="Selo de conclusão do álbum" className="stamp-screen-img" />
+      </div>
+      <div className="stamp-screen-nav prev">‹</div>
+      <div className="stamp-screen-nav next">›</div>
+    </div>
+  );
+}
+
+/* ===== Shared-element morph: Home stamp ↔ Selos page ===== */
+function SharedStampMorph({ transition, stampAspect }) {
+  const { dir, from, to, phase } = transition;
+
+  const vpW = window.innerWidth;
+  const vpH = window.innerHeight;
+  const STAMP_W_BIG = 220;
+  const STAMP_H_BIG = STAMP_W_BIG * stampAspect;
+  const centerLeft = (vpW - STAMP_W_BIG) / 2;
+  const centerTop  = (vpH - STAMP_H_BIG) / 2;
+
+  let stampPos;
+  if (dir === "open") {
+    stampPos = phase === "expand"
+      ? { top: centerTop, left: centerLeft, width: STAMP_W_BIG }
+      : { top: from.top,  left: from.left,  width: from.width };
+  } else {
+    // close: from = center position captured in handleBackFromSelos
+    stampPos = (phase === "collapse" && to)
+      ? { top: to.top,   left: to.left,   width: to.width }
+      : { top: from.top, left: from.left, width: from.width };
+  }
+
+  // stamp-bg fades in when opening (expand) or is already visible when closing (until collapse)
+  const bgVisible = dir === "open" ? phase === "expand" : phase !== "collapse";
+  // subtle home overlay dims the home content on close so the bg doesn't pop
+  const dimVisible = dir === "close" && phase === "init";
+
+  return (
+    <div className="stamp-morph-root">
+      <div className={"stamp-morph-bg" + (bgVisible ? " on" : "")} />
+      <div className={"stamp-morph-home-dim" + (dimVisible ? " on" : "")} />
+      <img
+        src="FINAL 2-BG.png"
+        className="stamp-morph-img"
+        style={{
+          top:   stampPos.top  + "px",
+          left:  stampPos.left + "px",
+          width: stampPos.width + "px",
+        }}
+        alt=""
+      />
     </div>
   );
 }
