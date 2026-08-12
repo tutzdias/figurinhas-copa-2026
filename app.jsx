@@ -350,15 +350,14 @@ function App() {
   const [stampTransition, setStampTransition] = useState(null);
   const homeStampRef = useRef(null);
   const selosStampRef = useRef(null);
-  // Stores the last measured selos stamp rect so handleOpenSelos can use it
-  // even before the selos screen is mounted.
+  // Cache stamp rects so each direction can animate without the other screen mounted.
   const selosStampRectCache = useRef(null);
+  const homeStampRectCache = useRef(null);
 
   const handleOpenSelos = (rect) => {
     if (stampTransition) return;
     const from = { top: rect.top, left: rect.left, width: rect.width };
-    // Use the cached rect from the last selos visit, or fall back to a rough
-    // computation (safe-area-inset-top resolved dynamically via a temp element).
+    homeStampRectCache.current = from;
     let to = selosStampRectCache.current;
     if (!to) {
       const tmp = document.createElement('div');
@@ -383,24 +382,24 @@ function App() {
 
   const handleBackFromSelos = () => {
     if (stampTransition) return;
-    // Measure directly from the mounted selos stamp element.
     const selosEl = selosStampRef.current;
     const sr = selosEl ? selosEl.getBoundingClientRect() : null;
     const from = sr
       ? { top: sr.top, left: sr.left, width: sr.width }
       : selosStampRectCache.current || { top: 32, left: 16, width: 250 };
-    // Cache for the next open transition.
     selosStampRectCache.current = from;
-    setStampTransition({ dir: "close", from, to: null, phase: "init" });
-    setRoute("home");
+    const to = homeStampRectCache.current;
+    // Mirror the open transition: keep selos screen visible during the animation,
+    // then switch to home once the collapse starts (same frame as afterPaint).
+    // This avoids the white flash caused by the old approach of switching routes
+    // immediately and using a cream dim to cover the home screen.
+    if (!to) { setRoute("home"); return; }
+    setStampTransition({ dir: "close", from, to, phase: "init" });
     afterPaint(() => {
-      const el = homeStampRef.current;
-      if (!el) { setStampTransition(null); return; }
-      const r = el.getBoundingClientRect();
-      const to = { top: r.top, left: r.left, width: r.width };
-      setStampTransition(m => m && { ...m, to, phase: "collapse" });
-      window.setTimeout(() => setStampTransition(null), 560);
+      setRoute("home");
+      setStampTransition(m => m && { ...m, phase: "collapse" });
     });
+    window.setTimeout(() => setStampTransition(null), 560);
   };
 
   // Safety net: always clear a stuck stamp morph
@@ -1084,13 +1083,11 @@ function SharedStampMorph({ transition }) {
     rotation  = atDest ? "rotate(-13.81deg)" : "rotate(0deg)";
   }
 
-  const bgVisible  = dir === "open" ? phase === "expand" : phase !== "collapse";
-  const dimVisible = dir === "close" && phase === "init";
+  const bgVisible = dir === "open" ? phase === "expand" : phase !== "collapse";
 
   return (
     <div className="stamp-morph-root">
-      <div className={"stamp-morph-bg"       + (bgVisible  ? " on" : "")} />
-      <div className={"stamp-morph-home-dim" + (dimVisible ? " on" : "")} />
+      <div className={"stamp-morph-bg" + (bgVisible ? " on" : "")} />
       <img
         src="FINAL 2-BG.png"
         className="stamp-morph-img"
